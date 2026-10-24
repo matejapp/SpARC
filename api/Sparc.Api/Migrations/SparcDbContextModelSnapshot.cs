@@ -340,6 +340,57 @@ namespace Sparc.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Sparc.Api.Models.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("FamilyExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FamilyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<short?>("RevocationReason")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("character(64)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FamilyId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens", t =>
+                        {
+                            t.HasCheckConstraint("CK_RefreshTokens_ExpiresWithinFamily", "\"ExpiresAt\" <= \"FamilyExpiresAt\"");
+
+                            t.HasCheckConstraint("CK_RefreshTokens_Revocation", "(\"RevokedAt\" IS NULL) = (\"RevocationReason\" IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Sparc.Api.Models.Transaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -434,6 +485,17 @@ namespace Sparc.Api.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Sparc.Api.Models.RefreshToken", b =>
+                {
+                    b.HasOne("Sparc.Api.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

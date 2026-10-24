@@ -30,6 +30,7 @@ public sealed class GlobalExceptionHandler(
                 Status = StatusCodes.Status400BadRequest,
                 Title = e.Message,
             },
+            AuthenticationFailedException e => Problem(StatusCodes.Status401Unauthorized, "Unauthorized.", e.Message),
             NotFoundException e => Problem(StatusCodes.Status404NotFound, "Not found.", e.Message),
             ConflictException e => Problem(StatusCodes.Status409Conflict, "Conflict.", e.Message),
 

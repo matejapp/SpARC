@@ -11,6 +11,12 @@ public abstract class AppException(string message) : Exception(message);
 /// </summary>
 public sealed class NotFoundException(string resource) : AppException($"{resource} was not found.");
 
+/// <summary>
+/// 401 from an auth endpoint: bad credentials, or a refresh token that is unknown, expired or
+/// revoked. One message per endpoint, whatever the cause, so the response reveals nothing.
+/// </summary>
+public sealed class AuthenticationFailedException(string message) : AppException(message);
+
 /// <summary>409. Duplicate data, or a state change that is no longer allowed (e.g. already paid).</summary>
 public sealed class ConflictException(string message) : AppException(message);
 
