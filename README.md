@@ -374,9 +374,10 @@ npx expo start
 
 Open the app in Expo Go: on an iPhone, scan the QR code with the camera; on Android, scan it
 from inside the Expo Go app. Both need to be signed in to the same Expo account as the CLI
-(`npx expo login --no-browser` if the browser login fails on Windows). The Home screen's
-**API connection** card shows whether the phone reaches `/health`. Plain HTTP works inside
-Expo Go only; a dev build or the deployed app uses HTTPS.
+(`npx expo login --no-browser` if the browser login fails on Windows). If the login screen
+says it can't reach the server, open `<EXPO_PUBLIC_API_URL>/health` in Safari on the phone
+to check the network path. Plain HTTP works inside Expo Go only; a dev build or the deployed
+app uses HTTPS.
 
 ### Receipt service
 
