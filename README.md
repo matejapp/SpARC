@@ -236,29 +236,29 @@ or a bill's due date are stored as `date`. Every schema change is an EF Core mig
 
 ## API
 
-All endpoints are under `/api` and require `Authorization: Bearer <token>` unless marked
+All endpoints are under `/api/v1` and require `Authorization: Bearer <token>` unless marked
 public. Errors are always `ProblemDetails`.
 
 | Area | Endpoint | |
 |---|---|---|
-| Auth | `POST /api/auth/register` | public |
-| | `POST /api/auth/login` | public |
-| | `POST /api/auth/refresh` | public |
-| | `POST /api/auth/logout` | |
-| | `POST /api/auth/verify-email`, `POST /api/auth/resend-verification` | public |
-| | `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` | public |
-| Account | `GET /api/users/me`, `PUT /api/users/me` | preferred currency |
-| Categories | `GET /api/categories`, `POST /api/categories`, `DELETE /api/categories/{id}` | |
-| Transactions | `GET /api/transactions` | paged; filter by type, date range, category, currency |
-| | `POST /api/transactions` | |
-| | `GET`, `PUT`, `DELETE /api/transactions/{id}` | |
-| Dashboard | `GET /api/dashboard/summary?from=&to=` | income, expense, difference |
-| | `GET /api/dashboard/trend`, `GET /api/dashboard/by-category` | |
-| Bills | `GET /api/bills`, `POST /api/bills` | |
-| | `PUT`, `DELETE /api/bills/{id}` | |
-| | `GET /api/bills/occurrences?from=&to=` | calendar |
-| | `POST /api/bills/occurrences/{id}/pay` | creates exactly one expense |
-| Receipts | `POST /api/receipts/scan` | returns suggestions only — nothing is saved |
+| Auth | `POST /api/v1/auth/register` | public |
+| | `POST /api/v1/auth/login` | public |
+| | `POST /api/v1/auth/refresh` | public |
+| | `POST /api/v1/auth/logout` | |
+| | `POST /api/v1/auth/verify-email`, `POST /api/v1/auth/resend-verification` | public |
+| | `POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/reset-password` | public |
+| Account | `GET /api/v1/users/me`, `PUT /api/v1/users/me` | preferred currency |
+| Categories | `GET /api/v1/categories`, `POST /api/v1/categories`, `DELETE /api/v1/categories/{id}` | |
+| Transactions | `GET /api/v1/transactions` | paged; filter by type, date range, category, currency |
+| | `POST /api/v1/transactions` | |
+| | `GET`, `PUT`, `DELETE /api/v1/transactions/{id}` | |
+| Dashboard | `GET /api/v1/dashboard/summary?from=&to=` | income, expense, difference |
+| | `GET /api/v1/dashboard/trend`, `GET /api/v1/dashboard/by-category` | |
+| Bills | `GET /api/v1/bills`, `POST /api/v1/bills` | |
+| | `PUT`, `DELETE /api/v1/bills/{id}` | |
+| | `GET /api/v1/bills/occurrences?from=&to=` | calendar |
+| | `POST /api/v1/bills/occurrences/{id}/pay` | creates exactly one expense |
+| Receipts | `POST /api/v1/receipts/scan` | returns suggestions only — nothing is saved |
 | Health | `GET /health` | public; checks the database |
 
 Example error:

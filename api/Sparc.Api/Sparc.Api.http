@@ -1,4 +1,4 @@
-@Sparc.Api_HostAddress = http://localhost:5263
+@Sparc.Api_HostAddress = http://localhost:5263/
 
 GET {{Sparc.Api_HostAddress}}/health
 
