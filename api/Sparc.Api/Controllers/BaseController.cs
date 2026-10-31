@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.JsonWebTokens;
+using Sparc.Api.Common;
 
 namespace Sparc.Api.Controllers;
 
@@ -20,8 +20,7 @@ public abstract class BaseController : ControllerBase
     /// anywhere in the API. Never read a user id from the body, query or route.
     /// </summary>
     protected Guid CurrentUserId =>
-        Guid.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out var id)
-            ? id
+        User.GetUserId()
             // Unreachable behind [Authorize] with our own tokens; a 500 if it ever happens.
-            : throw new InvalidOperationException("Authenticated request without a valid sub claim.");
+            ?? throw new InvalidOperationException("Authenticated request without a valid sub claim.");
 }

@@ -30,6 +30,9 @@ if (connectionString.StartsWith("postgres", StringComparison.OrdinalIgnoreCase))
         "(Host=...;Database=...;Username=...;Password=...). Neon's Connect dialog offers it as the .NET option.");
 }
 
+// The context reads the current user for its ownership filters (D-026).
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddDbContext<SparcDbContext>(options => options.UseNpgsql(connectionString));
 
 // Identity core only: UserManager + the password hasher, no cookies, no roles (D-006, D-013).

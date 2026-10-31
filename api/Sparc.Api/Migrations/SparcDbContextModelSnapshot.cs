@@ -192,7 +192,10 @@ namespace Sparc.Api.Migrations
 
                     b.HasIndex("UserId", "Kind");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", t =>
+                        {
+                            t.HasCheckConstraint("CK_Categories_SystemHasNoOwner", "(\"UserId\" IS NULL) = \"IsSystem\"");
+                        });
 
                     b.HasData(
                         new
