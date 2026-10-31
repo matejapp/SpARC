@@ -53,6 +53,7 @@ export const shadows = {
   card: '0 1px 2px rgba(31,29,27,0.04), 0 8px 24px rgba(31,29,27,0.06)',
   primaryButton: '0 8px 18px -8px rgba(31,29,27,0.5)',
   addButton: '0 12px 24px -10px rgba(184,70,28,0.7)',
+  outline: 'inset 0 0 0 1px #ECE8E4', // secondary buttons, chips
   tabBar: '0 -1px 0 #ECE8E4',
 } as const;
 
@@ -78,6 +79,7 @@ export const type = {
   body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22 },
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
   button: { fontFamily: fonts.semiBold, fontSize: 16 },
+  buttonSmall: { fontFamily: fonts.semiBold, fontSize: 15 },
   tabLabel: { fontFamily: fonts.semiBold, fontSize: 12 },
   tabLabelActive: { fontFamily: fonts.bold, fontSize: 12 },
 } as const;

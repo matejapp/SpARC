@@ -346,11 +346,26 @@ cd app
 npm install
 ```
 
-Create `app/.env` (it is git-ignored). The phone's `localhost` is the phone, so point it at
-your PC's LAN address:
+Copy `app/.env.example` to `app/.env` (it is git-ignored). The phone's `localhost` is the
+phone, so point it at your PC's LAN address:
 
 ```
-EXPO_PUBLIC_API_URL=https://<your-pc-lan-ip>:<port>
+EXPO_PUBLIC_API_URL=http://<your-pc-lan-ip>:5263
+```
+
+Start the API so it listens on the network, not only on `localhost`:
+
+```powershell
+dotnet run --project api/Sparc.Api --launch-profile lan
+```
+
+Once, in an elevated PowerShell — mark your home Wi-Fi as Private and open the API and Metro
+ports to your own subnet only:
+
+```powershell
+Set-NetConnectionProfile -InterfaceAlias "Wi-Fi" -NetworkCategory Private
+New-NetFirewallRule -DisplayName "SpARC API (dev, LAN only)" -Direction Inbound -Protocol TCP -LocalPort 5263 -Action Allow -Profile Private -RemoteAddress LocalSubnet
+New-NetFirewallRule -DisplayName "Expo Metro (dev, LAN only)" -Direction Inbound -Protocol TCP -LocalPort 8081 -Action Allow -Profile Private -RemoteAddress LocalSubnet
 ```
 
 ```powershell
@@ -359,9 +374,9 @@ npx expo start
 
 Open the app in Expo Go: on an iPhone, scan the QR code with the camera; on Android, scan it
 from inside the Expo Go app. Both need to be signed in to the same Expo account as the CLI
-(`npx expo login --no-browser` if the browser login fails on Windows). Allow the API port
-through the Windows firewall, and serve the API over HTTPS with a certificate the phone
-trusts — both platforms restrict plain HTTP.
+(`npx expo login --no-browser` if the browser login fails on Windows). The Home screen's
+**API connection** card shows whether the phone reaches `/health`. Plain HTTP works inside
+Expo Go only; a dev build or the deployed app uses HTTPS.
 
 ### Receipt service
 
