@@ -13,7 +13,7 @@ import { useEffect } from 'react';
 
 import { queryClient } from '@/lib/queryClient';
 import { restoreSession, useSessionStatus } from '@/lib/session';
-import { colors } from '@/lib/theme';
+import { colors, scheme } from '@/lib/theme';
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -36,7 +36,7 @@ export default function RootLayout() {
   const signedIn = session === 'signedIn';
   return (
     <QueryClientProvider client={queryClient}>
-      <StatusBar style="dark" />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.ground } }}
       >

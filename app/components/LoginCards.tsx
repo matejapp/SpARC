@@ -12,7 +12,7 @@ import { colors, gradients, radii, shadows, tabularNums, type } from '@/lib/them
 export function LoginCards() {
   return (
     <View style={styles.stage} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <LinearGradient {...gradients.charcoal} style={[styles.card, styles.back]} />
+      <LinearGradient {...gradients.cardBack} style={[styles.card, styles.back]} />
       <View style={[styles.card, styles.front]}>
         <LinearGradient {...gradients.accent} style={styles.frontFace}>
           <CardRings size={200} opacity={0.18} />
@@ -49,14 +49,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     justifyContent: 'space-between',
   },
-  period: { ...type.tabLabelActive, letterSpacing: 1.68, color: colors.onInk, alignSelf: 'flex-end' },
+  period: { ...type.tabLabelActive, letterSpacing: 1.68, color: colors.onAccent, alignSelf: 'flex-end' },
   caption: { ...type.caption, fontFamily: type.label.fontFamily, color: colors.onCard },
   amount: {
     ...type.display,
     fontSize: 28,
     lineHeight: 34,
     letterSpacing: -0.56,
-    color: colors.onInk,
+    color: colors.onAccent,
     ...tabularNums,
   },
   currency: { ...type.buttonSmall, fontSize: 14 },

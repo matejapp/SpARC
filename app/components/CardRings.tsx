@@ -21,7 +21,7 @@ export function CardRings({ size = 220, opacity = 0.16 }: { size?: number; opaci
           cy={110}
           r={r}
           fill="none"
-          stroke={colors.onInk}
+          stroke={colors.onAccent}
           strokeOpacity={opacity}
           strokeWidth={1.5}
         />

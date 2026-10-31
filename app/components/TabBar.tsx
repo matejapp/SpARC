@@ -19,7 +19,7 @@ export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarPr
     const route = state.routes[index];
     const { label, Icon } = TABS[route.name];
     const focused = index === state.index;
-    const color = focused ? colors.ink : colors.ink2;
+    const color = focused ? colors.tabActive : colors.ink2;
 
     const onPress = () => {
       const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
@@ -53,7 +53,7 @@ export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarPr
         style={styles.add}
       >
         <LinearGradient {...gradients.accent} style={styles.addFill}>
-          <PlusIcon color={colors.onInk} />
+          <PlusIcon color={colors.onAccent} />
         </LinearGradient>
       </Pressable>
       {tab(1)}

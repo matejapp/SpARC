@@ -99,8 +99,8 @@ export default function DashboardScreen() {
               accessibilityLabel="Add expense"
               style={({ pressed }) => [styles.quickButton, styles.quickExpense, pressed && styles.pressed]}
             >
-              <MinusIcon color={colors.onInk} />
-              <Text style={[styles.quickLabel, { color: colors.onInk }]}>Expense</Text>
+              <MinusIcon color={colors.onPrimary} />
+              <Text style={[styles.quickLabel, { color: colors.onPrimary }]}>Expense</Text>
             </Pressable>
             <Pressable
               onPress={() => router.push({ pathname: '/add', params: { type: 'income' } })}
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  quickExpense: { backgroundColor: colors.ink, boxShadow: shadows.primaryButton },
+  quickExpense: { backgroundColor: colors.primary, boxShadow: shadows.primaryButton },
   quickIncome: { backgroundColor: colors.surface, boxShadow: shadows.outline },
   quickLabel: { ...type.buttonSmall },
   pressed: { opacity: 0.85 },

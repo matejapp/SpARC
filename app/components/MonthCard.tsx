@@ -10,7 +10,7 @@ import type { DashboardSummaryResponse } from '@/types/api';
 
 // The current month on the orange card (board → Dashboard, first-run Dashboard). The accent
 // gradient is reserved for this card, the add button and the icon (D-027). Amounts on it are
-// white: on orange, colour can't carry meaning, so the signs do.
+// one colour: on the accent, colour can't carry meaning, so the signs do.
 //
 // Shaped like a payment card (D-032): ISO/IEC 7810 ID-1 proportions, 85.60 × 53.98 mm, with a
 // chip and the contactless mark, so it reads as a card rather than a panel at any phone width.
@@ -75,7 +75,7 @@ export function MonthCard({
       >
         <CardRings />
         <View style={styles.top}>
-          <Wordmark size={15} color={colors.onInk} />
+          <Wordmark size={15} color={colors.onAccent} />
           <Text style={styles.code}>{code}</Text>
         </View>
 
@@ -131,13 +131,13 @@ const styles = StyleSheet.create({
   },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  code: { ...type.cardCode, color: colors.onInk },
+  code: { ...type.cardCode, color: colors.onAccent },
   caption: { ...type.cardCaption, color: colors.onCard },
-  amount: { ...type.cardAmount, ...tabularNums, color: colors.onInk, marginTop: 2 },
+  amount: { ...type.cardAmount, ...tabularNums, color: colors.onAccent, marginTop: 2 },
   currency: { ...type.cardCurrency },
   stats: { flexDirection: 'row', gap: 24 },
   statLabel: { ...type.cardStatLabel, color: colors.onCard },
-  statValue: { ...type.cardStatValue, ...tabularNums, color: colors.onInk },
+  statValue: { ...type.cardStatValue, ...tabularNums, color: colors.onAccent },
   bar: { backgroundColor: colors.onCardSkeleton, borderRadius: 6 },
   barAmount: { height: 28, width: 170, marginTop: 6 },
   barStat: { height: 30, width: 96 },

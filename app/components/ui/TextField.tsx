@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import { EyeIcon } from '@/components/icons';
-import { colors, radii, shadows, type } from '@/lib/theme';
+import { colors, radii, scheme, shadows, type } from '@/lib/theme';
 
 type Props = Omit<TextInputProps, 'style'> & {
   label: string;
@@ -40,6 +40,7 @@ export const TextField = forwardRef<TextInputInstance, Props>(function TextField
           accessibilityHint={error ?? hint}
           secureTextEntry={secret && !revealed}
           placeholderTextColor={colors.placeholder}
+          keyboardAppearance={scheme}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);

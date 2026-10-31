@@ -1,50 +1,63 @@
-// Design tokens from D-027 and the design board. No colour value lives anywhere else:
-// components import from here. Light mode only; a dark set slots in beside `colors` later.
+// Design tokens. No colour value lives anywhere else: components import from here.
+//
+// TRIAL (branch exp/midnight-palette): midnight black, electric blue and cantaloupe orange,
+// replacing the D-027 light palette to see the app in it. Roles, not hues, are what the
+// components name: `primary` is the action colour (electric blue), `accent` the month card and
+// add button (cantaloupe), `ink` the text colour (light on midnight). Contrast: text ≥ 6.6:1 on
+// its surfaces, white on primary 4.5:1, midnight on cantaloupe ≥ 5.4:1.
+
+/** The app is dark: status bar, keyboard and native pickers follow it. */
+export const scheme = 'dark' as const;
 
 export const colors = {
-  ground: '#F6F4F2', // screen background
-  surface: '#FFFFFF', // cards, inputs
-  ink: '#1F1D1B', // text, primary buttons, expense amounts
-  ink2: '#6F6A65', // secondary text, inactive tab
-  hairline: '#ECE8E4',
-  tile: '#F3EFEC', // icon tile behind an expense row
-  muted: '#E4DFDA', // disabled button, skeleton
-  income: '#2F7D57',
-  incomeTint: '#E7F2EC',
-  error: '#C0362C',
-  errorTint: '#FBEAE8',
-  accentText: '#B8461C', // links; never an amount
-  onCard: '#FFE9DE', // small text on the orange card
-  onCardPast: '#E4DED9', // small text on a charcoal card
+  ground: '#0A0D14', // midnight: screen background
+  surface: '#151A24', // cards, inputs
+  ink: '#EEF1F7', // text, icons, expense amounts
+  ink2: '#97A1B3', // secondary text, inactive tab
+  hairline: '#222A38',
+  tile: '#1B2130', // icon tile behind an uncoloured row
+  muted: '#2A3242', // disabled button, skeleton
+  primary: '#2E6BFF', // electric blue: primary buttons, the chosen chip, focus
+  onPrimary: '#FFFFFF',
+  tabActive: '#7AA2FF',
+  income: '#3DD68C',
+  incomeTint: '#0F2A1E',
+  error: '#FF6B5E',
+  errorTint: '#34161A',
+  accentText: '#7AA2FF', // links, the avatar initial; never an amount
+  onAccent: '#0A0D14', // text and marks on the cantaloupe card and the add button
+  onCard: 'rgba(10,13,20,0.78)', // small text on the cantaloupe card
   onInk: '#FFFFFF',
-  placeholder: '#8A847E',
-  dotInactive: '#D6D0CA', // inactive pager dot, outline of a quiet button
-  overlay: 'rgba(31,29,27,0.08)', // pressed state on light surfaces
-  onCardSkeleton: 'rgba(255,255,255,0.28)', // loading bars on the orange card
-  cardChip: 'rgba(255,233,222,0.55)', // the chip on the month card
-  cardChipLine: 'rgba(122,59,30,0.35)',
+  placeholder: '#6B7588',
+  dotInactive: '#3A4356',
+  overlay: 'rgba(255,255,255,0.08)', // pressed state on dark surfaces
+  onCardSkeleton: 'rgba(10,13,20,0.14)', // loading bars on the cantaloupe card
+  cardChip: 'rgba(255,255,255,0.45)', // the chip on the month card
+  cardChipLine: 'rgba(10,13,20,0.35)',
+  segmentTrack: '#0F131C',
+  segmentThumb: '#2A3242',
 } as const;
 
-// One hue per seeded category (D-032), for its row tile, icon and chip. Income categories stay
-// in the green family and no expense category is green, so green still reads as "income".
-// Orange stays the accent's alone. Icon on tint is ≥ 4.3:1, ink text on tint ≥ 13:1.
+// One hue per seeded category (D-032), for its row tile, icon and chip: a deep tint with a light
+// ink on midnight. Income categories stay in the green family and no expense category is green,
+// so green still reads as "income". Icon on tint ≥ 6.1:1, text on tint ≥ 12.7:1.
 type Tone = { tint: string; ink: string };
 
 const categoryTones: Record<string, Tone> = {
-  Groceries: { tint: '#E1EFF3', ink: '#1D7184' },
-  'Dining out': { tint: '#FBEEDB', ink: '#9A5B0E' },
-  Housing: { tint: '#F3E8E0', ink: '#875838' },
-  Utilities: { tint: '#FAF2D2', ink: '#7D6200' },
-  Transport: { tint: '#E4ECF8', ink: '#2E5C9A' },
-  Health: { tint: '#FAE6EA', ink: '#AE3752' },
-  Entertainment: { tint: '#EEE8F8', ink: '#6748A3' },
-  Shopping: { tint: '#F7E6F1', ink: '#9C3577' },
-  Subscriptions: { tint: '#E7E9F7', ink: '#434F9B' },
-  Education: { tint: '#E8EBF0', ink: '#4C5A72' },
-  Salary: { tint: '#E7F2EC', ink: '#2F7D57' },
-  Freelance: { tint: '#E6F1DF', ink: '#44722A' },
-  Gifts: { tint: '#EFF3DC', ink: '#58731C' },
-  Refunds: { tint: '#E0F1ED', ink: '#28705F' },
+  Groceries: { tint: '#0F2A31', ink: '#5CC8E0' },
+  'Dining out': { tint: '#33240F', ink: '#F2B25C' },
+  Housing: { tint: '#2E2119', ink: '#D69A72' },
+  Utilities: { tint: '#2F2A0E', ink: '#E8CB4A' },
+  Transport: { tint: '#142340', ink: '#7FA8F5' },
+  Health: { tint: '#3A1520', ink: '#F27B97' },
+  Entertainment: { tint: '#251C3D', ink: '#B49AF0' },
+  Shopping: { tint: '#36152B', ink: '#EA80C2' },
+  Subscriptions: { tint: '#1B1F3F', ink: '#9AA4F2' },
+  Education: { tint: '#1E2430', ink: '#A9B6CC' },
+  Salary: { tint: '#0F2A1E', ink: '#3DD68C' },
+  Freelance: { tint: '#1A2A12', ink: '#8FD45E' },
+  Gifts: { tint: '#26290F', ink: '#C2D84A' },
+  Refunds: { tint: '#0E2A26', ink: '#4FD1B5' },
 };
 
 /** A category's colours; "Other …", user categories and unknown names fall back by kind. */
@@ -57,21 +70,21 @@ export function categoryTone(name: string | null, kind: 'income' | 'expense'): T
   );
 }
 
-// The accent gradient appears only on the current-month card, the add button and the
-// app icon (D-027). The board draws it radial from the top-right; expo-linear-gradient
-// approximates that with a diagonal run from `start` to `end`.
+// The accent (cantaloupe) appears only on the current-month card, the add button and the mark.
+// The second login card is electric blue. expo-linear-gradient runs diagonally from `start`
+// to `end`, approximating the board's radial light from the top-right.
 export const gradients = {
   accent: {
-    colors: ['#F7A26B', '#E5602A', '#B8461C', '#7A3B1E'],
+    colors: ['#FFC9A3', '#FFA177', '#F7894F', '#E8743D'],
     start: { x: 1, y: 0 },
     end: { x: 0, y: 1 },
   },
-  charcoal: {
-    colors: ['#5A534E', '#3A3633', '#1F1D1B'],
+  cardBack: {
+    colors: ['#6E9BFF', '#2E6BFF', '#1A3FB8'],
     start: { x: 1, y: 0 },
     end: { x: 0, y: 1 },
   },
-  mark: ['#F28A4B', '#E5602A', '#B8461C'],
+  mark: ['#FFC9A3', '#FFA177', '#E8743D'],
 } as const;
 
 export const radii = {
@@ -87,22 +100,23 @@ export const spacing = {
   screenTop: 60, // header offset on the board's 390 × 844 frames, safe area included
 } as const;
 
-// React Native `boxShadow` takes the CSS syntax, so these are copied from the board as is.
+// React Native `boxShadow` takes the CSS syntax. On midnight a drop shadow barely shows, so
+// surfaces separate by colour and hairlines; the coloured glows mark the two accents.
 export const shadows = {
-  card: '0 1px 2px rgba(31,29,27,0.04), 0 8px 24px rgba(31,29,27,0.06)',
-  primaryButton: '0 8px 18px -8px rgba(31,29,27,0.5)',
-  addButton: '0 12px 24px -10px rgba(184,70,28,0.7)',
-  outline: 'inset 0 0 0 1px #ECE8E4', // secondary buttons, chips, idle inputs
-  outlineQuiet: 'inset 0 0 0 1px #DCD6D0', // "Load older"
-  fieldFocus: 'inset 0 0 0 2px #1F1D1B',
-  fieldError: 'inset 0 0 0 2px #C0362C',
-  segmentLift: '0 1px 2px rgba(31,29,27,0.08), 0 4px 10px rgba(31,29,27,0.06)',
-  monthCard: '0 20px 40px -16px rgba(184,70,28,0.55)',
-  tabBar: '0 -1px 0 #ECE8E4',
-  divider: 'inset 0 1px 0 #ECE8E4', // between rows in a card
+  card: 'inset 0 0 0 1px #1E2533, 0 10px 24px rgba(0,0,0,0.35)',
+  primaryButton: '0 10px 22px -10px rgba(46,107,255,0.8)',
+  addButton: '0 12px 26px -10px rgba(255,161,119,0.75)',
+  outline: 'inset 0 0 0 1px #2A3242', // secondary buttons, idle inputs
+  outlineQuiet: 'inset 0 0 0 1px #3A4356', // "Load older"
+  fieldFocus: 'inset 0 0 0 2px #2E6BFF',
+  fieldError: 'inset 0 0 0 2px #FF6B5E',
+  segmentLift: '0 2px 8px rgba(0,0,0,0.4)',
+  monthCard: '0 22px 44px -18px rgba(255,161,119,0.55)',
+  tabBar: '0 -1px 0 #1E2533',
+  divider: 'inset 0 1px 0 #222A38', // between rows in a card
 } as const;
 
-export const tabBarBackground = 'rgba(255,255,255,0.92)';
+export const tabBarBackground = 'rgba(14,18,27,0.94)';
 
 // Plus Jakarta Sans ships one file per weight, so each weight is its own family.
 // Never pair these with `fontWeight` — iOS may fall back to the system font.

@@ -4,7 +4,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CalendarIcon, ChevronIcon } from '@/components/icons';
 import { dateLabel, fromIsoDate, MIN_ENTRY_DATE, toIsoDate } from '@/lib/dates';
-import { colors, radii, shadows, type } from '@/lib/theme';
+import { colors, radii, scheme, shadows, type } from '@/lib/theme';
 import type { IsoDate } from '@/types/api';
 
 // The board's Date row (56 high, calendar icon, caption above the value, chevron). Tapping it
@@ -57,7 +57,7 @@ export function DateField({
             maximumDate={today}
             onChange={handleChange}
             accentColor={colors.accentText}
-            themeVariant="light"
+            themeVariant={scheme}
           />
         </View>
       ) : null}

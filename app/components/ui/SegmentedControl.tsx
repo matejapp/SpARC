@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     gap: 4,
     padding: 4,
     borderRadius: radii.pill,
-    backgroundColor: colors.hairline,
+    backgroundColor: colors.segmentTrack,
   },
   option: {
     flex: 1,
@@ -51,6 +51,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  selected: { backgroundColor: colors.surface, boxShadow: shadows.segmentLift },
+  selected: { backgroundColor: colors.segmentThumb, boxShadow: shadows.segmentLift },
   text: { ...type.buttonSmall, color: colors.ink },
 });

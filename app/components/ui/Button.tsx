@@ -15,7 +15,7 @@ type Props = {
   tall?: boolean; // 56 instead of 52: the save button at the bottom of a form
 };
 
-// Primary actions are ink, never orange (D-027). Secondary is white with a hairline.
+// Primary actions are the primary colour, never the accent. Secondary is a surface with a hairline.
 export function Button({
   label,
   onPress,
@@ -62,7 +62,7 @@ export function Button({
 }
 
 const labelColor = StyleSheet.create({
-  primary: { color: colors.onInk },
+  primary: { color: colors.onPrimary },
   secondary: { color: colors.ink },
   quiet: { color: colors.ink },
   link: { color: colors.accentText },
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   tall: { height: 56 },
   content: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  primary: { backgroundColor: colors.ink, boxShadow: shadows.primaryButton },
+  primary: { backgroundColor: colors.primary, boxShadow: shadows.primaryButton },
   primaryInactive: { backgroundColor: colors.muted, boxShadow: 'none' },
   secondary: { backgroundColor: colors.surface, boxShadow: shadows.outline },
   quiet: { backgroundColor: 'transparent', boxShadow: shadows.outlineQuiet, height: 48 },

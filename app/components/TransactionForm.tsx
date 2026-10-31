@@ -11,7 +11,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useCategories } from '@/hooks/useTransactions';
 import { todayIso } from '@/lib/dates';
 import { parseAmount } from '@/lib/money';
-import { categoryTone, colors, radii, shadows, tabularNums, type } from '@/lib/theme';
+import { categoryTone, colors, radii, scheme, shadows, tabularNums, type } from '@/lib/theme';
 import type { IsoDate, TransactionRequest, TransactionType } from '@/types/api';
 
 export type TransactionDraft = {
@@ -137,6 +137,7 @@ export function TransactionForm({
             }}
             placeholder="0,00"
             placeholderTextColor={colors.placeholder}
+            keyboardAppearance={scheme}
             keyboardType="decimal-pad"
             accessibilityLabel="Amount in RSD"
             accessibilityHint={errors.amount}
@@ -183,8 +184,8 @@ export function TransactionForm({
                   accessibilityState={{ checked: selected }}
                   style={[styles.chip, { backgroundColor: tone.tint }, selected && styles.chipSelected]}
                 >
-                  {/* Idle chips carry their category colour; the chosen one turns ink. */}
-                  <View style={[styles.chipDot, { backgroundColor: selected ? colors.onInk : tone.ink }]} />
+                  {/* Idle chips carry their category colour; the chosen one turns primary. */}
+                  <View style={[styles.chipDot, { backgroundColor: selected ? colors.onPrimary : tone.ink }]} />
                   <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{c.name}</Text>
                 </Pressable>
               );
@@ -207,6 +208,7 @@ export function TransactionForm({
             onChangeText={(description) => set({ description })}
             placeholder="Description (optional)"
             placeholderTextColor={colors.placeholder}
+            keyboardAppearance={scheme}
             accessibilityLabel="Description"
             maxLength={500}
             returnKeyType="done"
@@ -254,9 +256,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chipDot: { width: 8, height: 8, borderRadius: 4 },
-  chipSelected: { backgroundColor: colors.ink, boxShadow: 'none' },
+  chipSelected: { backgroundColor: colors.primary, boxShadow: 'none' },
   chipText: { ...type.chip, color: colors.ink },
-  chipTextSelected: { color: colors.onInk },
+  chipTextSelected: { color: colors.onPrimary },
   chipSkeleton: { height: 44, borderRadius: radii.pill, backgroundColor: colors.hairline },
   inlineError: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   inlineErrorText: { ...type.body, color: colors.ink },
