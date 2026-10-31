@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Sparc.Api.Models;
@@ -13,6 +14,7 @@ public class Category : ITimestamped
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public AppUser? User { get; set; }
 
+    [MaxLength(50)]
     public required string Name { get; set; }
     public TransactionType Kind { get; set; }
     public bool IsSystem { get; set; }

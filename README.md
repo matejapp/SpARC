@@ -248,8 +248,8 @@ public. Errors are always `ProblemDetails`.
 | | `POST /api/v1/auth/verify-email`, `POST /api/v1/auth/resend-verification` | public |
 | | `POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/reset-password` | public |
 | Account | `GET /api/v1/users/me`, `PUT /api/v1/users/me` | preferred currency |
-| Categories | `GET /api/v1/categories`, `POST /api/v1/categories`, `DELETE /api/v1/categories/{id}` | |
-| Transactions | `GET /api/v1/transactions` | paged; filter by type, date range, category, currency |
+| Categories | `GET /api/v1/categories?kind=`, `POST /api/v1/categories`, `DELETE /api/v1/categories/{id}` | system set + own; delete own only |
+| Transactions | `GET /api/v1/transactions?page=&pageSize=` | paged, newest first; filters arrive in iteration 3 |
 | | `POST /api/v1/transactions` | |
 | | `GET`, `PUT`, `DELETE /api/v1/transactions/{id}` | |
 | Dashboard | `GET /api/v1/dashboard/summary?from=&to=` | income, expense, difference |

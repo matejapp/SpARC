@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,6 +39,8 @@ public class Transaction : ITimestamped
 
     /// <summary>The day the money moved, not the day it was typed.</summary>
     public DateOnly OccurredOn { get; set; }
+
+    [MaxLength(500)]
     public string? Description { get; set; }
 
     /// <summary>

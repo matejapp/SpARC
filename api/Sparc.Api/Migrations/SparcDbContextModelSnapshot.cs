@@ -179,7 +179,8 @@ namespace Sparc.Api.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -419,7 +420,8 @@ namespace Sparc.Api.Migrations
                         .HasColumnType("character(3)");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateOnly>("OccurredOn")
                         .HasColumnType("date");
@@ -449,7 +451,16 @@ namespace Sparc.Api.Migrations
                     b.HasIndex("UserId", "OccurredOn")
                         .IsDescending(false, true);
 
-                    b.ToTable("Transactions");
+                    b.ToTable("Transactions", t =>
+                        {
+                            t.HasCheckConstraint("CK_Transactions_AmountRsd_Positive", "\"AmountRsd\" > 0");
+
+                            t.HasCheckConstraint("CK_Transactions_Amount_Positive", "\"Amount\" > 0");
+
+                            t.HasCheckConstraint("CK_Transactions_Currency", "\"Currency\" IN ('RSD', 'EUR', 'USD')");
+
+                            t.HasCheckConstraint("CK_Transactions_RateToRsd_Positive", "\"RateToRsd\" > 0");
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
