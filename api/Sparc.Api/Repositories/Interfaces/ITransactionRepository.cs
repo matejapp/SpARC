@@ -26,4 +26,10 @@ public interface ITransactionRepository
 
     /// <summary>False when the transaction does not exist or belongs to another user.</summary>
     Task<bool> DeleteAsync(Guid userId, Guid id);
+
+    /// <summary>
+    /// Sum of AmountRsd per type between two dates, inclusive, computed by the database.
+    /// Zero for a type with no rows.
+    /// </summary>
+    Task<(decimal Income, decimal Expense)> SumByTypeAsync(Guid userId, DateOnly from, DateOnly to);
 }
