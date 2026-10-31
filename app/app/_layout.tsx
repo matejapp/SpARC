@@ -41,14 +41,16 @@ export default function RootLayout() {
         screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.ground } }}
       >
         {/* Every route must sit in one of these groups: a screen outside both is reachable
-            signed out. When the session changes, expo-router redirects to the open group. */}
-        <Stack.Protected guard={signedIn}>
+            signed out. When the session changes, expo-router redirects to `redirectTo`. It has
+            to be named: the default target is the open group's bare path, and "/(auth)" has
+            no index, so a logout would land on "Unmatched route". */}
+        <Stack.Protected guard={signedIn} redirectTo="/login">
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="add" options={{ presentation: 'modal' }} />
           <Stack.Screen name="settings" />
           <Stack.Screen name="transaction/[id]" />
         </Stack.Protected>
-        <Stack.Protected guard={!signedIn}>
+        <Stack.Protected guard={!signedIn} redirectTo="/">
           <Stack.Screen name="(auth)" />
         </Stack.Protected>
       </Stack>
