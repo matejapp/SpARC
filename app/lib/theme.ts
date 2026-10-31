@@ -20,6 +20,7 @@ export const colors = {
   placeholder: '#8A847E',
   dotInactive: '#D6D0CA', // inactive pager dot, outline of a quiet button
   overlay: 'rgba(31,29,27,0.08)', // pressed state on light surfaces
+  onCardSkeleton: 'rgba(255,255,255,0.28)', // loading bars on the orange card
 } as const;
 
 // The accent gradient appears only on the current-month card, the add button and the
@@ -98,6 +99,14 @@ export const type = {
   fieldCaption: { fontFamily: fonts.semiBold, fontSize: 12, lineHeight: 16 },
   fieldValue: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 20 },
   pill: { fontFamily: fonts.bold, fontSize: 14 },
+  greetingLabel: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20 },
+  cardCode: { fontFamily: fonts.bold, fontSize: 12, letterSpacing: 1.68 },
+  cardCaption: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
+  cardAmount: { fontFamily: fonts.extraBold, fontSize: 30, lineHeight: 36, letterSpacing: -0.6 },
+  cardCurrency: { fontFamily: fonts.semiBold, fontSize: 15 },
+  cardStatLabel: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 16 },
+  cardStatValue: { fontFamily: fonts.bold, fontSize: 14, lineHeight: 20 },
+  avatar: { fontFamily: fonts.extraBold, fontSize: 17 },
   headline: { fontFamily: fonts.semiBold, fontSize: 16, lineHeight: 22 },
   body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22 },
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },

@@ -22,13 +22,13 @@ export function TransactionRow({
   const income = item.type === 'income';
   const ink = income ? colors.income : colors.ink;
   const title = item.description || item.categoryName || (income ? 'Income' : 'Expense');
-  const amount = formatSigned(item.amount, item.type, item.currency);
+  const amount = formatSigned(item.amount, item.type, item.currency === 'RSD' ? undefined : item.currency);
 
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${title}, ${caption}, ${income ? 'income' : 'expense'} ${amount}`}
+      accessibilityLabel={`${title}, ${caption}, ${income ? 'income' : 'expense'} ${formatSigned(item.amount, item.type, item.currency)}`}
       accessibilityHint="Opens the transaction"
       style={({ pressed }) => [styles.row, divider && styles.divider, pressed && styles.pressed]}
     >

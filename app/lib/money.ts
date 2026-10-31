@@ -12,14 +12,23 @@ export function formatAmount(value: number): string {
   return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${cents}`;
 }
 
-/** 1250.5 → "1.250,50 RSD"; a negative value keeps its sign ("−1.250,50 RSD"). */
-export function formatMoney(value: number, currency: Currency = 'RSD'): string {
-  return `${value < 0 ? MINUS : ''}${formatAmount(value)} ${currency}`;
+/** Signed for a total that can go negative: "−1.250,50", "48.799,50". */
+export function formatSignedAmount(value: number): string {
+  return `${value < 0 ? MINUS : ''}${formatAmount(value)}`;
 }
 
-/** A transaction as listed: expenses "−", income "+". Colour is the caller's (ink / income green). */
-export function formatSigned(value: number, type: TransactionType, currency: Currency = 'RSD'): string {
-  return `${type === 'expense' ? MINUS : '+'}${formatAmount(value)} ${currency}`;
+/** 1250.5 → "1.250,50 RSD"; a negative value keeps its sign ("−1.250,50 RSD"). */
+export function formatMoney(value: number, currency: Currency = 'RSD'): string {
+  return `${formatSignedAmount(value)} ${currency}`;
+}
+
+/**
+ * A transaction as listed: expenses "−", income "+". Rows leave out the currency when it is
+ * RSD, as the board draws them; pass one to show it. Colour is the caller's (ink / income green).
+ */
+export function formatSigned(value: number, type: TransactionType, currency?: Currency): string {
+  const text = `${type === 'expense' ? MINUS : '+'}${formatAmount(value)}`;
+  return currency ? `${text} ${currency}` : text;
 }
 
 // The amount field. The API takes at most 2 decimals and refuses anything over
