@@ -1,8 +1,8 @@
 # SpARC
 
-**Personal finance tracker for iPhone.** Record what comes in and what goes out, never miss a
-recurring bill, see where the money actually went — and photograph a receipt instead of
-typing it.
+**Personal finance tracker for iOS and Android.** Record what comes in and what goes out,
+never miss a recurring bill, see where the money actually went — and photograph a receipt
+instead of typing it.
 
 **Sp**ending · **A**nalytics · **R**ecurring · **C**apture
 
@@ -157,8 +157,8 @@ as the one rule that cannot break.
   reset links are never logged.
 - **Tokens:** a short-lived access token plus a refresh token that rotates on every use and
   is stored hashed on the server. Reusing an old refresh token invalidates the chain.
-- **On the phone** both tokens live in the iOS keychain via `expo-secure-store` — never in
-  plain-text storage.
+- **On the phone** both tokens live in `expo-secure-store` — the iOS Keychain or the Android
+  Keystore — never in plain-text storage.
 - **Rate limiting** on sign in, registration and password reset.
 - **No information leaks in errors.** Every failure is returned as RFC 9457
   `ProblemDetails` with a trace id; stack traces, EF messages and SQL never reach the client.
@@ -174,8 +174,8 @@ as the one rule that cannot break.
 ```
 ┌─────────────────┐      HTTPS / JSON      ┌──────────────────────┐
 │   SpARC app     │ ─────────────────────► │   SpARC API          │
-│   Expo, iOS     │ ◄───────────────────── │   ASP.NET Core 10    │
-│   TypeScript    │     JWT in header      │   Controllers        │
+│  iOS + Android  │ ◄───────────────────── │   ASP.NET Core 10    │
+│ Expo TypeScript │     JWT in header      │   Controllers        │
 └─────────────────┘                        │   Services           │
                                            │   Repositories       │
                                            └──────┬───────┬───────┘
@@ -314,8 +314,8 @@ sparc/
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Node.js](https://nodejs.org/) LTS
 - A PostgreSQL database — a free [Neon](https://neon.tech) project works
-- An iPhone with [Expo Go](https://expo.dev/go), or an EAS development build for camera
-  features
+- An iPhone or Android phone with [Expo Go](https://expo.dev/go), or an EAS development
+  build for camera features
 
 ### API
 
@@ -357,9 +357,11 @@ EXPO_PUBLIC_API_URL=https://<your-pc-lan-ip>:<port>
 npx expo start
 ```
 
-Scan the QR code with the iPhone camera to open the app in Expo Go. Allow the API port
+Open the app in Expo Go: on an iPhone, scan the QR code with the camera; on Android, scan it
+from inside the Expo Go app. Both need to be signed in to the same Expo account as the CLI
+(`npx expo login --no-browser` if the browser login fails on Windows). Allow the API port
 through the Windows firewall, and serve the API over HTTPS with a certificate the phone
-trusts — iOS blocks plain HTTP.
+trusts — both platforms restrict plain HTTP.
 
 ### Receipt service
 
