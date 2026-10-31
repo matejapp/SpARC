@@ -21,3 +21,46 @@ export function formatMoney(value: number, currency: Currency = 'RSD'): string {
 export function formatSigned(value: number, type: TransactionType, currency: Currency = 'RSD'): string {
   return `${type === 'expense' ? MINUS : '+'}${formatAmount(value)} ${currency}`;
 }
+
+// The amount field. The API takes at most 2 decimals and refuses anything over
+// 9.999.999.999.999.999,99; the app caps at 13 integer digits, so every accepted value has at
+// most 15 significant digits. A JS number carries that exactly, and JSON.stringify writes back
+// the same digits the user typed, so the amount crosses to the API's decimal unchanged. The app
+// never does arithmetic on it (D-031).
+const MAX_INTEGER_DIGITS = 13;
+
+export type AmountParse = { ok: true; value: number } | { ok: false; error: string };
+
+/**
+ * Reads what the user typed, sr-Latn first: "1.250,50", "1250,50". A point is also accepted as
+ * the decimal mark ("1250.50", what some keyboards offer) unless it groups thousands ("1.250").
+ */
+export function parseAmount(text: string): AmountParse {
+  const raw = text.replace(/[\s\u00A0]/g, '');
+  if (!raw) return { ok: false, error: 'Enter an amount.' };
+
+  let whole: string;
+  let decimals = '';
+  if (raw.includes(',')) {
+    // Decimal comma; points may only group thousands.
+    const match = /^(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d*))?$/.exec(raw);
+    if (!match) return { ok: false, error: 'Enter a number, like 1.250,50.' };
+    whole = match[1].replace(/\./g, '');
+    decimals = match[2] ?? '';
+  } else if (/^\d{1,3}(?:\.\d{3})+$/.test(raw)) {
+    whole = raw.replace(/\./g, ''); // "1.250" is one thousand two hundred fifty
+  } else {
+    const match = /^(\d+)(?:\.(\d*))?$/.exec(raw);
+    if (!match) return { ok: false, error: 'Enter a number, like 1.250,50.' };
+    whole = match[1];
+    decimals = match[2] ?? '';
+  }
+
+  if (decimals.length > 2) return { ok: false, error: 'At most 2 decimal places.' };
+  const digits = whole.replace(/^0+(?=\d)/, '');
+  if (digits.length > MAX_INTEGER_DIGITS) return { ok: false, error: 'That amount is too large.' };
+
+  const value = Number(`${digits}.${decimals || '0'}`);
+  if (!(value > 0)) return { ok: false, error: 'Enter an amount greater than zero.' };
+  return { ok: true, value };
+}

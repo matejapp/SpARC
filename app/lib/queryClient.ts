@@ -5,7 +5,8 @@ import { ApiError } from '@/api/client';
 import { getSessionStatus, subscribeSession } from '@/lib/session';
 
 // Server state lives in TanStack Query (ARCHITECTURE.md → App structure). Query keys:
-//   ['transactions'] list · ['transaction', id] · ['categories', kind] · ['dashboard', from, to] · ['me']
+//   ['transactions', 'list'] · ['transactions', 'detail', id] · ['categories', kind] ·
+//   ['dashboard', from, to] · ['me']
 // A change to a transaction invalidates ['transactions'] and ['dashboard'] together.
 
 export const queryClient = new QueryClient({

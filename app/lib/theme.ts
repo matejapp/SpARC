@@ -63,6 +63,7 @@ export const shadows = {
   segmentLift: '0 1px 2px rgba(31,29,27,0.08), 0 4px 10px rgba(31,29,27,0.06)',
   monthCard: '0 20px 40px -16px rgba(184,70,28,0.55)',
   tabBar: '0 -1px 0 #ECE8E4',
+  divider: 'inset 0 1px 0 #ECE8E4', // between rows in a card
 } as const;
 
 export const tabBarBackground = 'rgba(255,255,255,0.92)';
@@ -92,6 +93,11 @@ export const type = {
   dayHeading: { fontFamily: fonts.bold, fontSize: 13, lineHeight: 18, letterSpacing: 0.78 },
   bannerText: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20 },
   errorText: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
+  amountInput: { fontFamily: fonts.extraBold, fontSize: 44, letterSpacing: -1.32 },
+  chip: { fontFamily: fonts.semiBold, fontSize: 14 },
+  fieldCaption: { fontFamily: fonts.semiBold, fontSize: 12, lineHeight: 16 },
+  fieldValue: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 20 },
+  pill: { fontFamily: fonts.bold, fontSize: 14 },
   headline: { fontFamily: fonts.semiBold, fontSize: 16, lineHeight: 22 },
   body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22 },
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },

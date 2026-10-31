@@ -9,7 +9,16 @@ import { colors, spacing } from '@/lib/theme';
 // height on iOS (Android resizes the window natively, so it needs no behaviour), and the
 // ScrollView lets the user reach a field the shrink pushed off screen. `footer` sits at the
 // bottom, like the board's Log in / Create an account buttons.
-export function FormScreen({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
+export function FormScreen({
+  children,
+  footer,
+  topInset = true,
+}: {
+  children: ReactNode;
+  footer?: ReactNode;
+  /** false inside an iOS modal sheet, which already starts below the status bar. */
+  topInset?: boolean;
+}) {
   const insets = useSafeAreaInsets();
   return (
     <KeyboardAvoidingView
@@ -20,7 +29,7 @@ export function FormScreen({ children, footer }: { children: ReactNode; footer?:
         style={styles.flex}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + 12, paddingBottom: Math.max(insets.bottom, 16) + 20 },
+          { paddingTop: (topInset ? insets.top : 0) + 12, paddingBottom: Math.max(insets.bottom, 16) + 20 },
         ]}
         // A tap on a button while the keyboard is up should press the button, not just
         // dismiss the keyboard.
