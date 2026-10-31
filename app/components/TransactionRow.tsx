@@ -2,10 +2,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { formatSigned } from '@/lib/money';
-import { colors, radii, shadows, tabularNums, type } from '@/lib/theme';
+import { categoryTone, colors, radii, shadows, tabularNums, type } from '@/lib/theme';
 import type { TransactionResponse } from '@/types/api';
 
-// One row as the board draws it: 44 × 44 tile with the category icon, the description (or the
+// One row as the board draws it: 44 × 44 tile with the category icon in its colour (D-032), the description (or the
 // category when there is none), a caption, and the signed amount — ink for an expense, green
 // for income, never orange.
 export function TransactionRow({
@@ -20,7 +20,8 @@ export function TransactionRow({
   onPress: () => void;
 }) {
   const income = item.type === 'income';
-  const ink = income ? colors.income : colors.ink;
+  const ink = income ? colors.income : colors.ink; // the amount
+  const tone = categoryTone(item.categoryName, item.type);
   const title = item.description || item.categoryName || (income ? 'Income' : 'Expense');
   const amount = formatSigned(item.amount, item.type, item.currency === 'RSD' ? undefined : item.currency);
 
@@ -32,8 +33,8 @@ export function TransactionRow({
       accessibilityHint="Opens the transaction"
       style={({ pressed }) => [styles.row, divider && styles.divider, pressed && styles.pressed]}
     >
-      <View style={[styles.tile, { backgroundColor: income ? colors.incomeTint : colors.tile }]}>
-        <CategoryIcon name={item.categoryName} color={ink} />
+      <View style={[styles.tile, { backgroundColor: tone.tint }]}>
+        <CategoryIcon name={item.categoryName} color={tone.ink} />
       </View>
       <View style={styles.text}>
         <Text style={styles.title} numberOfLines={1}>

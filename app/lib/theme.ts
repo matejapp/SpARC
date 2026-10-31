@@ -21,7 +21,41 @@ export const colors = {
   dotInactive: '#D6D0CA', // inactive pager dot, outline of a quiet button
   overlay: 'rgba(31,29,27,0.08)', // pressed state on light surfaces
   onCardSkeleton: 'rgba(255,255,255,0.28)', // loading bars on the orange card
+  cardChip: 'rgba(255,233,222,0.55)', // the chip on the month card
+  cardChipLine: 'rgba(122,59,30,0.35)',
 } as const;
+
+// One hue per seeded category (D-032), for its row tile, icon and chip. Income categories stay
+// in the green family and no expense category is green, so green still reads as "income".
+// Orange stays the accent's alone. Icon on tint is ≥ 4.3:1, ink text on tint ≥ 13:1.
+type Tone = { tint: string; ink: string };
+
+const categoryTones: Record<string, Tone> = {
+  Groceries: { tint: '#E1EFF3', ink: '#1D7184' },
+  'Dining out': { tint: '#FBEEDB', ink: '#9A5B0E' },
+  Housing: { tint: '#F3E8E0', ink: '#875838' },
+  Utilities: { tint: '#FAF2D2', ink: '#7D6200' },
+  Transport: { tint: '#E4ECF8', ink: '#2E5C9A' },
+  Health: { tint: '#FAE6EA', ink: '#AE3752' },
+  Entertainment: { tint: '#EEE8F8', ink: '#6748A3' },
+  Shopping: { tint: '#F7E6F1', ink: '#9C3577' },
+  Subscriptions: { tint: '#E7E9F7', ink: '#434F9B' },
+  Education: { tint: '#E8EBF0', ink: '#4C5A72' },
+  Salary: { tint: '#E7F2EC', ink: '#2F7D57' },
+  Freelance: { tint: '#E6F1DF', ink: '#44722A' },
+  Gifts: { tint: '#EFF3DC', ink: '#58731C' },
+  Refunds: { tint: '#E0F1ED', ink: '#28705F' },
+};
+
+/** A category's colours; "Other …", user categories and unknown names fall back by kind. */
+export function categoryTone(name: string | null, kind: 'income' | 'expense'): Tone {
+  return (
+    (name && categoryTones[name]) ||
+    (kind === 'income'
+      ? { tint: colors.incomeTint, ink: colors.income }
+      : { tint: colors.tile, ink: colors.ink })
+  );
+}
 
 // The accent gradient appears only on the current-month card, the add button and the
 // app icon (D-027). The board draws it radial from the top-right; expo-linear-gradient
@@ -42,6 +76,7 @@ export const gradients = {
 
 export const radii = {
   card: 28,
+  bankCard: 20, // the month card: a payment card's corners, not a panel's (D-032)
   field: 18,
   tile: 14,
   pill: 999,

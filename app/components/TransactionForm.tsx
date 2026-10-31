@@ -11,7 +11,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useCategories } from '@/hooks/useTransactions';
 import { todayIso } from '@/lib/dates';
 import { parseAmount } from '@/lib/money';
-import { colors, radii, shadows, tabularNums, type } from '@/lib/theme';
+import { categoryTone, colors, radii, shadows, tabularNums, type } from '@/lib/theme';
 import type { IsoDate, TransactionRequest, TransactionType } from '@/types/api';
 
 export type TransactionDraft = {
@@ -171,6 +171,7 @@ export function TransactionForm({
           <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Category">
             {categories.data.map((c) => {
               const selected = c.id === draft.categoryId;
+              const tone = categoryTone(c.name, c.kind);
               return (
                 <Pressable
                   key={c.id}
@@ -180,8 +181,10 @@ export function TransactionForm({
                   }}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: selected }}
-                  style={[styles.chip, selected && styles.chipSelected]}
+                  style={[styles.chip, { backgroundColor: tone.tint }, selected && styles.chipSelected]}
                 >
+                  {/* Idle chips carry their category colour; the chosen one turns ink. */}
+                  <View style={[styles.chipDot, { backgroundColor: selected ? colors.onInk : tone.ink }]} />
                   <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{c.name}</Text>
                 </Pressable>
               );
@@ -243,12 +246,14 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     height: 44,
-    paddingHorizontal: 16,
+    paddingLeft: 14,
+    paddingRight: 16,
     borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-    boxShadow: shadows.outline,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
+  chipDot: { width: 8, height: 8, borderRadius: 4 },
   chipSelected: { backgroundColor: colors.ink, boxShadow: 'none' },
   chipText: { ...type.chip, color: colors.ink },
   chipTextSelected: { color: colors.onInk },
