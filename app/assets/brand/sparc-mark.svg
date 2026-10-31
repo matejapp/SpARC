@@ -2,11 +2,11 @@
   <title>SpARC</title>
   <defs>
     <linearGradient id="sparc-arc" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#F28A4B"/>
-      <stop offset="0.5" stop-color="#E5602A"/>
-      <stop offset="1" stop-color="#B8461C"/>
+      <stop offset="0" stop-color="#FFB088"/>
+      <stop offset="0.5" stop-color="#FF9461"/>
+      <stop offset="1" stop-color="#E8743D"/>
     </linearGradient>
   </defs>
   <path d="M50 20A30 30 0 1 1 20 50" fill="none" stroke="url(#sparc-arc)" stroke-width="14" stroke-linecap="round"/>
-  <circle cx="28.8" cy="28.8" r="7" fill="#1F1D1B"/>
+  <circle cx="28.8" cy="28.8" r="7" fill="#0A0D14"/>
 </svg>

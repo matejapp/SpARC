@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <title>SpARC</title>
   <!-- Single colour for tiny sizes (≤ 24 px): stroke and dot slightly heavier so they survive. -->
-  <path d="M50 20A30 30 0 1 1 20 50" fill="none" stroke="#1F1D1B" stroke-width="16" stroke-linecap="round"/>
-  <circle cx="28.8" cy="28.8" r="8" fill="#1F1D1B"/>
+  <path d="M50 20A30 30 0 1 1 20 50" fill="none" stroke="#0A0D14" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="28.8" cy="28.8" r="8" fill="#0A0D14"/>
 </svg>
