@@ -15,5 +15,10 @@ export function getApiBaseUrl(): string {
       `EXPO_PUBLIC_API_URL must be scheme://host[:port] with no path, got "${raw}".`,
     );
   }
+  // Plain HTTP is a development-only allowance inside Expo Go (D-030). Any other build sends
+  // passwords and tokens, so it must not be able to send them in the clear.
+  if (!__DEV__ && !raw.startsWith('https://')) {
+    throw new Error('EXPO_PUBLIC_API_URL must be https:// outside development.');
+  }
   return raw;
 }
