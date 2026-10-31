@@ -1,9 +1,10 @@
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
-import { colors, gradients } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 
 // The arc-and-spark mark (D-027), drawn from assets/brand/sparc-mark.svg.
 export function SparcMark({ size = 40 }: { size?: number }) {
+  const { colors, gradients } = useTheme();
   const [from, mid, to] = gradients.mark;
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100" accessibilityLabel="SpARC">

@@ -1,12 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { ActivityIcon, HomeIcon, PlusIcon } from '@/components/icons';
-import { colors, gradients, radii, shadows, tabBarBackground, type } from '@/lib/theme';
+import { makeStyles, radii, type, useTheme } from '@/lib/theme';
 
-// The board's bottom bar: Home, the orange add button, Activity. It replaces the default
+// The board's bottom bar: Home, the cantaloupe add button, Activity. It replaces the default
 // tab bar, so it does the default's job too: emit `tabPress` and switch tabs.
 
 const TABS: Record<string, { label: string; Icon: typeof HomeIcon }> = {
@@ -15,6 +15,8 @@ const TABS: Record<string, { label: string; Icon: typeof HomeIcon }> = {
 };
 
 export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarProps) {
+  const styles = useStyles();
+  const { colors, gradients } = useTheme();
   const tab = (index: number) => {
     const route = state.routes[index];
     const { label, Icon } = TABS[route.name];
@@ -61,15 +63,15 @@ export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarPr
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   bar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 10,
     paddingHorizontal: 28,
-    backgroundColor: tabBarBackground,
-    boxShadow: shadows.tabBar,
+    backgroundColor: t.tabBarBackground,
+    boxShadow: t.shadows.tabBar,
   },
   tab: {
     width: 72,
@@ -82,7 +84,7 @@ const styles = StyleSheet.create({
     height: 56,
     marginTop: -26,
     borderRadius: radii.pill,
-    boxShadow: shadows.addButton,
+    boxShadow: t.shadows.addButton,
   },
   addFill: {
     flex: 1,
@@ -90,4 +92,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+}));

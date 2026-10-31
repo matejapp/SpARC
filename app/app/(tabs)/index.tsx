@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MinusIcon, PlusIcon, WalletIcon } from '@/components/icons';
+import { BrandArc } from '@/components/BrandArc';
 import { MonthCard } from '@/components/MonthCard';
 import { TransactionRow } from '@/components/TransactionRow';
 import { Button } from '@/components/ui/Button';
@@ -12,7 +13,7 @@ import { useSummary } from '@/hooks/useDashboard';
 import { useMe } from '@/hooks/useMe';
 import { flattenPages, useTransactionList } from '@/hooks/useTransactions';
 import { currentMonth, shortDay } from '@/lib/dates';
-import { colors, radii, shadows, spacing, type } from '@/lib/theme';
+import { makeStyles, radii, spacing, type, useTheme } from '@/lib/theme';
 
 const RECENT = 4;
 
@@ -20,6 +21,8 @@ const RECENT = 4;
 // this month's card, quick Expense / Income buttons and the latest transactions. Recent rows
 // come from the same cached query as the Activity tab, so neither screen fetches twice.
 export default function DashboardScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const month = currentMonth();
   const me = useMe();
@@ -48,6 +51,7 @@ export default function DashboardScreen() {
         />
       }
     >
+      <BrandArc />
       <View style={styles.header}>
         <View style={styles.greeting}>
           <Text style={styles.greetingLabel}>{firstRun ? 'Welcome' : 'Welcome back'}</Text>
@@ -147,40 +151,40 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.ground },
+const useStyles = makeStyles((t) => ({
+  screen: { flex: 1, backgroundColor: t.colors.ground },
   content: { paddingHorizontal: spacing.gutter, paddingBottom: 28, gap: 24 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   greeting: { flex: 1 },
-  greetingLabel: { ...type.greetingLabel, color: colors.ink2 },
-  name: { ...type.greetingName, color: colors.ink, marginTop: 2 },
-  nameSkeleton: { height: 26, width: 140, borderRadius: 8, backgroundColor: colors.muted, marginTop: 4 },
+  greetingLabel: { ...type.greetingLabel, color: t.colors.ink2 },
+  name: { ...type.greetingName, color: t.colors.ink, marginTop: 2 },
+  nameSkeleton: { height: 26, width: 140, borderRadius: 8, backgroundColor: t.colors.muted, marginTop: 4 },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-    boxShadow: shadows.card,
+    backgroundColor: t.colors.surface,
+    boxShadow: t.shadows.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { ...type.avatar, color: colors.accentText },
-  card: { backgroundColor: colors.surface, borderRadius: radii.card, boxShadow: shadows.card },
+  avatarText: { ...type.avatar, color: t.colors.accentText },
+  card: { backgroundColor: t.colors.surface, borderRadius: radii.card, boxShadow: t.shadows.card },
   message: { padding: 20, gap: 12 },
-  messageTitle: { ...type.headline, color: colors.ink },
-  messageText: { ...type.body, color: colors.ink2 },
+  messageTitle: { ...type.headline, color: t.colors.ink },
+  messageText: { ...type.body, color: t.colors.ink2 },
   firstRun: { paddingVertical: 32, paddingHorizontal: 24, alignItems: 'center', gap: 8 },
   firstRunIcon: {
     width: 64,
     height: 64,
     borderRadius: 20,
-    backgroundColor: colors.tile,
+    backgroundColor: t.colors.tile,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
   },
-  firstRunTitle: { ...type.sectionTitle, color: colors.ink },
-  firstRunText: { ...type.body, color: colors.ink2, textAlign: 'center', maxWidth: 260, marginBottom: 14 },
+  firstRunTitle: { ...type.sectionTitle, color: t.colors.ink },
+  firstRunText: { ...type.body, color: t.colors.ink2, textAlign: 'center', maxWidth: 260, marginBottom: 14 },
   quick: { flexDirection: 'row', gap: 12 },
   quickButton: {
     flex: 1,
@@ -191,12 +195,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  quickExpense: { backgroundColor: colors.primary, boxShadow: shadows.primaryButton },
-  quickIncome: { backgroundColor: colors.surface, boxShadow: shadows.outline },
+  quickExpense: { backgroundColor: t.colors.primary, boxShadow: t.shadows.primaryButton },
+  quickIncome: { backgroundColor: t.colors.surface, boxShadow: t.shadows.outline },
   quickLabel: { ...type.buttonSmall },
   pressed: { opacity: 0.85 },
   recent: { gap: 8, marginTop: 8 },
   recentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  recentTitle: { ...type.sectionTitle, color: colors.ink },
+  recentTitle: { ...type.sectionTitle, color: t.colors.ink },
   rows: { paddingVertical: 6, paddingHorizontal: 16 },
-});
+}));

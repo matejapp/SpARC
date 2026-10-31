@@ -1,7 +1,6 @@
 import { forwardRef, useState } from 'react';
 import {
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -10,7 +9,7 @@ import {
 } from 'react-native';
 
 import { EyeIcon } from '@/components/icons';
-import { colors, radii, scheme, shadows, type } from '@/lib/theme';
+import { makeStyles, radii, type, useTheme } from '@/lib/theme';
 
 type Props = Omit<TextInputProps, 'style'> & {
   label: string;
@@ -25,6 +24,8 @@ export const TextField = forwardRef<TextInputInstance, Props>(function TextField
   { label, error, hint, secret, onFocus, onBlur, ...input },
   ref,
 ) {
+  const styles = useStyles();
+  const { colors, scheme, shadows } = useTheme();
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const ring = error ? shadows.fieldError : focused ? shadows.fieldFocus : shadows.outline;
@@ -73,17 +74,17 @@ export const TextField = forwardRef<TextInputInstance, Props>(function TextField
   );
 });
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   wrap: { gap: 6 },
-  label: { ...type.label, color: colors.ink },
+  label: { ...type.label, color: t.colors.ink },
   field: {
     height: 52,
     borderRadius: radii.field,
-    backgroundColor: colors.surface,
+    backgroundColor: t.colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  input: { ...type.input, flex: 1, height: '100%', paddingHorizontal: 18, color: colors.ink },
+  input: { ...type.input, flex: 1, height: '100%', paddingHorizontal: 18, color: t.colors.ink },
   inputWithButton: { paddingRight: 4 },
   eye: {
     width: 44,
@@ -93,6 +94,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  error: { ...type.errorText, color: colors.error },
-  hint: { ...type.caption, color: colors.ink2 },
-});
+  error: { ...type.errorText, color: t.colors.error },
+  hint: { ...type.caption, color: t.colors.ink2 },
+}));

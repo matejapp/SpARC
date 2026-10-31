@@ -1,20 +1,29 @@
 import { useMutation } from '@tanstack/react-query';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { signOut } from '@/api/auth';
 import { ApiError } from '@/api/client';
+import { BrandArc } from '@/components/BrandArc';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { Button } from '@/components/ui/Button';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useMe } from '@/hooks/useMe';
 import { clearSession } from '@/lib/session';
-import { colors, radii, shadows, spacing, type } from '@/lib/theme';
+import { makeStyles, radii, setThemeMode, spacing, type, useThemeMode } from '@/lib/theme';
 
-// Profile and settings, opened from the avatar on the dashboard. Sprint 1 holds the account
-// and logout; the period and currency settings arrive with their own cards.
+// Profile and settings, opened from the avatar on the dashboard. Sprint 1 holds the account,
+// the theme and logout; the period and currency settings arrive with their own cards.
+const THEME_OPTIONS = [
+  { value: 'dark', label: 'Dark' },
+  { value: 'light', label: 'Light' },
+] as const;
+
 export default function SettingsScreen() {
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const me = useMe();
+  const themeMode = useThemeMode();
 
   const logout = useMutation({
     mutationFn: signOut,
@@ -43,6 +52,7 @@ export default function SettingsScreen() {
         { paddingTop: insets.top + 8, paddingBottom: Math.max(insets.bottom, 16) + 20 },
       ]}
     >
+      <BrandArc />
       <ScreenHeader title="Profile and settings" />
 
       <View style={styles.card}>
@@ -76,6 +86,17 @@ export default function SettingsScreen() {
         )}
       </View>
 
+      {/* The theme is this phone's preference, saved on the phone; it switches at once (D-033). */}
+      <View style={[styles.card, styles.cardRoomy]}>
+        <Text style={styles.rowLabel}>Theme</Text>
+        <SegmentedControl
+          label="Theme"
+          options={THEME_OPTIONS}
+          value={themeMode}
+          onChange={setThemeMode}
+        />
+      </View>
+
       <View style={styles.card}>
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Currency</Text>
@@ -95,36 +116,37 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.ground },
+const useStyles = makeStyles((t) => ({
+  screen: { flex: 1, backgroundColor: t.colors.ground },
   content: { paddingHorizontal: spacing.gutter, gap: 16 },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: t.colors.surface,
     borderRadius: radii.card,
     padding: 20,
-    boxShadow: shadows.card,
+    boxShadow: t.shadows.card,
     gap: 6,
   },
+  cardRoomy: { gap: 12 },
   profile: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   avatar: {
     width: 52,
     height: 52,
     borderRadius: radii.pill,
-    backgroundColor: colors.tile,
+    backgroundColor: t.colors.tile,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  initial: { ...type.title, color: colors.accentText },
+  initial: { ...type.title, color: t.colors.accentText },
   lines: { flex: 1, gap: 6 },
-  name: { ...type.headline, color: colors.ink },
-  email: { ...type.caption, color: colors.ink2 },
-  skeleton: { backgroundColor: colors.muted, borderRadius: radii.tile },
+  name: { ...type.headline, color: t.colors.ink },
+  email: { ...type.caption, color: t.colors.ink2 },
+  skeleton: { backgroundColor: t.colors.muted, borderRadius: radii.tile },
   lineWide: { height: 16, width: '60%' },
   lineNarrow: { height: 12, width: '80%' },
   errorBlock: { alignItems: 'flex-start', gap: 4 },
-  errorText: { ...type.body, color: colors.ink },
+  errorText: { ...type.body, color: t.colors.ink },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  rowLabel: { ...type.headline, color: colors.ink },
-  rowValue: { ...type.headline, color: colors.ink2 },
-  note: { ...type.caption, color: colors.ink2 },
-});
+  rowLabel: { ...type.headline, color: t.colors.ink },
+  rowValue: { ...type.headline, color: t.colors.ink2 },
+  note: { ...type.caption, color: t.colors.ink2 },
+}));

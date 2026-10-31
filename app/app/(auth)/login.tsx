@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, View, type TextInputInstance } from 'react-native';
+import { Text, View, type TextInputInstance } from 'react-native';
 
 import { signIn } from '@/api/auth';
 import { ApiError } from '@/api/client';
@@ -11,11 +11,12 @@ import { ErrorBanner } from '@/components/ui/Banner';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { Wordmark } from '@/components/Wordmark';
-import { colors, type } from '@/lib/theme';
+import { makeStyles, type } from '@/lib/theme';
 
 type Fields = { login?: string; password?: string };
 
 export default function LoginScreen() {
+  const styles = useStyles();
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Fields>({});
@@ -45,6 +46,7 @@ export default function LoginScreen() {
 
   return (
     <FormScreen
+      arc
       footer={
         <>
           <Button label="Log in" loadingLabel="Logging in…" loading={mutation.isPending} onPress={submit} />
@@ -102,15 +104,15 @@ function fieldsFrom(error: Error): Fields {
   return error instanceof ApiError ? { login: error.fieldErrors.login, password: error.fieldErrors.password } : {};
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   headline: {
     ...type.display,
     fontSize: 30,
     lineHeight: 34,
     letterSpacing: -0.6,
-    color: colors.ink,
+    color: t.colors.ink,
     marginTop: 20,
   },
-  sub: { ...type.body, color: colors.ink2, marginTop: 8 },
+  sub: { ...type.body, color: t.colors.ink2, marginTop: 8 },
   form: { gap: 14, marginTop: 24 },
-});
+}));

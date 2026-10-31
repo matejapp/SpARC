@@ -1,6 +1,6 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
-import { colors, radii, shadows } from '@/lib/theme';
+import { makeStyles, radii } from '@/lib/theme';
 
 const WIDTHS = [
   ['60%', '40%'],
@@ -11,6 +11,7 @@ const WIDTHS = [
 
 /** Grey stand-ins for transaction rows inside a card (board → Transactions, loading). */
 export function RowsSkeleton({ rows = 4, label }: { rows?: number; label: string }) {
+  const styles = useStyles();
   return (
     <View
       style={styles.card}
@@ -35,19 +36,19 @@ export function RowsSkeleton({ rows = 4, label }: { rows?: number; label: string
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: t.colors.surface,
     borderRadius: radii.card,
     paddingVertical: 14,
     paddingHorizontal: 16,
     gap: 22,
-    boxShadow: shadows.card,
+    boxShadow: t.shadows.card,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  tile: { width: 44, height: 44, borderRadius: radii.tile, backgroundColor: colors.hairline },
+  tile: { width: 44, height: 44, borderRadius: radii.tile, backgroundColor: t.colors.hairline },
   lines: { flex: 1, gap: 8 },
-  line: { height: 12, borderRadius: 6, backgroundColor: colors.hairline },
-  lineSoft: { height: 10, borderRadius: 5, backgroundColor: colors.tile },
-  amount: { width: 64, height: 12, borderRadius: 6, backgroundColor: colors.hairline },
-});
+  line: { height: 12, borderRadius: 6, backgroundColor: t.colors.hairline },
+  lineSoft: { height: 10, borderRadius: 5, backgroundColor: t.colors.tile },
+  amount: { width: 64, height: 12, borderRadius: 6, backgroundColor: t.colors.hairline },
+}));

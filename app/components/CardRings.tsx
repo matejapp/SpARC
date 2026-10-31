@@ -1,11 +1,12 @@
 import { StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { colors } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 
 // The three concentric rings in the corner of a month card (board → Dashboard, Login).
 // Decorative; the card clips them.
 export function CardRings({ size = 220, opacity = 0.16 }: { size?: number; opacity?: number }) {
+  const { colors } = useTheme();
   return (
     <Svg
       width={size}

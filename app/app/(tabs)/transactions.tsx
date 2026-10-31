@@ -1,15 +1,16 @@
 import { router } from 'expo-router';
 import { useMemo, type ReactNode } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BrandArc } from '@/components/BrandArc';
 import { BackIcon } from '@/components/icons';
 import { TransactionRow } from '@/components/TransactionRow';
 import { Button } from '@/components/ui/Button';
 import { RowsSkeleton } from '@/components/ui/Skeleton';
 import { flattenPages, useTransactionList } from '@/hooks/useTransactions';
 import { dayHeading } from '@/lib/dates';
-import { colors, radii, shadows, spacing, tabularNums, type } from '@/lib/theme';
+import { makeStyles, radii, spacing, tabularNums, type, useTheme } from '@/lib/theme';
 import type { TransactionResponse } from '@/types/api';
 
 type Day = { date: string; items: TransactionResponse[] };
@@ -25,9 +26,11 @@ function byDay(rows: TransactionResponse[]): Day[] {
   return days;
 }
 
-// The Activity tab (board → Transactions): every transaction, grouped by day, in white cards.
+// The Activity tab (board → Transactions): every transaction, grouped by day, in cards.
 // FlatList renders only what is near the screen, so a long history stays cheap to scroll.
 export default function TransactionsScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const list = useTransactionList();
   const days = useMemo(() => byDay(flattenPages(list.data)), [list.data]);
@@ -89,6 +92,7 @@ export default function TransactionsScreen() {
       keyExtractor={(day) => day.date}
       ListHeaderComponent={
         <>
+          <BrandArc />
           {header}
           {body}
         </>
@@ -140,31 +144,31 @@ export default function TransactionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.ground },
+const useStyles = makeStyles((t) => ({
+  screen: { flex: 1, backgroundColor: t.colors.ground },
   content: { paddingHorizontal: spacing.gutter, paddingBottom: 24, gap: 18 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 2 },
   back: {
     width: 48,
     height: 48,
     borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-    boxShadow: shadows.card,
+    backgroundColor: t.colors.surface,
+    boxShadow: t.shadows.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerText: { flex: 1 },
-  title: { ...type.screenTitle, color: colors.ink },
-  subtitle: { ...type.caption, ...tabularNums, color: colors.ink2, marginTop: 2 },
+  title: { ...type.screenTitle, color: t.colors.ink },
+  subtitle: { ...type.caption, ...tabularNums, color: t.colors.ink2, marginTop: 2 },
   state: { marginTop: 20, gap: 10 },
-  headingSkeleton: { height: 12, width: 70, borderRadius: 6, backgroundColor: colors.muted, marginHorizontal: 4 },
-  card: { backgroundColor: colors.surface, borderRadius: radii.card, boxShadow: shadows.card },
+  headingSkeleton: { height: 12, width: 70, borderRadius: 6, backgroundColor: t.colors.muted, marginHorizontal: 4 },
+  card: { backgroundColor: t.colors.surface, borderRadius: radii.card, boxShadow: t.shadows.card },
   rows: { paddingVertical: 4, paddingHorizontal: 16 },
   message: { padding: 20, gap: 12, alignItems: 'stretch' },
-  messageTitle: { ...type.headline, color: colors.ink },
-  messageText: { ...type.body, color: colors.ink2 },
+  messageTitle: { ...type.headline, color: t.colors.ink },
+  messageText: { ...type.body, color: t.colors.ink2 },
   day: { gap: 8 },
-  dayHeading: { ...type.dayHeading, color: colors.ink2, marginHorizontal: 4 },
+  dayHeading: { ...type.dayHeading, color: t.colors.ink2, marginHorizontal: 4 },
   footer: { gap: 8 },
-  footerError: { ...type.caption, color: colors.error, textAlign: 'center' },
-});
+  footerError: { ...type.caption, color: t.colors.error, textAlign: 'center' },
+}));

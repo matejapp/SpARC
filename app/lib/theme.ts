@@ -1,91 +1,105 @@
-// Design tokens. No colour value lives anywhere else: components import from here.
+import * as SecureStore from 'expo-secure-store';
+import { useSyncExternalStore } from 'react';
+import { Appearance, StyleSheet } from 'react-native';
+
+import { dark, light, type Palette, type Scheme, type Tone } from '@/lib/palettes';
+
+// Design tokens. Colours come in two themes (lib/palettes.ts, D-033); shape, type and spacing
+// are the same in both and live here as plain constants.
 //
-// TRIAL (branch exp/midnight-palette): midnight black, electric blue and cantaloupe orange,
-// replacing the D-027 light palette to see the app in it. Roles, not hues, are what the
-// components name: `primary` is the action colour (electric blue), `accent` the month card and
-// add button (cantaloupe), `ink` the text colour (light on midnight). Contrast: text ≥ 6.6:1 on
-// its surfaces, white on primary 4.5:1, midnight on cantaloupe ≥ 5.4:1.
+// Switching themes at runtime means a style can't be computed once at import time. Components
+// read colours through useTheme(), and build their StyleSheet with makeStyles(), which makes
+// one sheet per theme and hands back the one for the current theme.
 
-/** The app is dark: status bar, keyboard and native pickers follow it. */
-export const scheme = 'dark' as const;
-
-export const colors = {
-  ground: '#0A0D14', // midnight: screen background
-  surface: '#151A24', // cards, inputs
-  ink: '#EEF1F7', // text, icons, expense amounts
-  ink2: '#97A1B3', // secondary text, inactive tab
-  hairline: '#222A38',
-  tile: '#1B2130', // icon tile behind an uncoloured row
-  muted: '#2A3242', // disabled button, skeleton
-  primary: '#2E6BFF', // electric blue: primary buttons, the chosen chip, focus
-  onPrimary: '#FFFFFF',
-  tabActive: '#7AA2FF',
-  income: '#3DD68C',
-  incomeTint: '#0F2A1E',
-  error: '#FF6B5E',
-  errorTint: '#34161A',
-  accentText: '#7AA2FF', // links, the avatar initial; never an amount
-  onAccent: '#0A0D14', // text and marks on the cantaloupe card and the add button
-  onCard: 'rgba(10,13,20,0.78)', // small text on the cantaloupe card
-  onInk: '#FFFFFF',
-  placeholder: '#6B7588',
-  dotInactive: '#3A4356',
-  overlay: 'rgba(255,255,255,0.08)', // pressed state on dark surfaces
-  onCardSkeleton: 'rgba(10,13,20,0.14)', // loading bars on the cantaloupe card
-  cardChip: 'rgba(255,255,255,0.45)', // the chip on the month card
-  cardChipLine: 'rgba(10,13,20,0.35)',
-  segmentTrack: '#0F131C',
-  segmentThumb: '#2A3242',
-} as const;
-
-// One hue per seeded category (D-032), for its row tile, icon and chip: a deep tint with a light
-// ink on midnight. Income categories stay in the green family and no expense category is green,
-// so green still reads as "income". Icon on tint ≥ 6.1:1, text on tint ≥ 12.7:1.
-type Tone = { tint: string; ink: string };
-
-const categoryTones: Record<string, Tone> = {
-  Groceries: { tint: '#0F2A31', ink: '#5CC8E0' },
-  'Dining out': { tint: '#33240F', ink: '#F2B25C' },
-  Housing: { tint: '#2E2119', ink: '#D69A72' },
-  Utilities: { tint: '#2F2A0E', ink: '#E8CB4A' },
-  Transport: { tint: '#142340', ink: '#7FA8F5' },
-  Health: { tint: '#3A1520', ink: '#F27B97' },
-  Entertainment: { tint: '#251C3D', ink: '#B49AF0' },
-  Shopping: { tint: '#36152B', ink: '#EA80C2' },
-  Subscriptions: { tint: '#1B1F3F', ink: '#9AA4F2' },
-  Education: { tint: '#1E2430', ink: '#A9B6CC' },
-  Salary: { tint: '#0F2A1E', ink: '#3DD68C' },
-  Freelance: { tint: '#1A2A12', ink: '#8FD45E' },
-  Gifts: { tint: '#26290F', ink: '#C2D84A' },
-  Refunds: { tint: '#0E2A26', ink: '#4FD1B5' },
+export type Theme = Palette & {
+  /** A category's colours; "Other …", user categories and unknown names fall back by kind. */
+  categoryTone: (name: string | null, kind: 'income' | 'expense') => Tone;
 };
 
-/** A category's colours; "Other …", user categories and unknown names fall back by kind. */
-export function categoryTone(name: string | null, kind: 'income' | 'expense'): Tone {
-  return (
-    (name && categoryTones[name]) ||
-    (kind === 'income'
-      ? { tint: colors.incomeTint, ink: colors.income }
-      : { tint: colors.tile, ink: colors.ink })
-  );
+function withHelpers(palette: Palette): Theme {
+  return {
+    ...palette,
+    categoryTone: (name, kind) =>
+      (name && palette.categoryTones[name]) ||
+      (kind === 'income'
+        ? { tint: palette.colors.incomeTint, ink: palette.colors.income }
+        : { tint: palette.colors.tile, ink: palette.colors.ink }),
+  };
 }
 
-// The accent (cantaloupe) appears only on the current-month card, the add button and the mark.
-// The second login card is electric blue. expo-linear-gradient runs diagonally from `start`
-// to `end`, approximating the board's radial light from the top-right.
-export const gradients = {
-  accent: {
-    colors: ['#FFC9A3', '#FFA177', '#F7894F', '#E8743D'],
-    start: { x: 1, y: 0 },
-    end: { x: 0, y: 1 },
-  },
-  cardBack: {
-    colors: ['#6E9BFF', '#2E6BFF', '#1A3FB8'],
-    start: { x: 1, y: 0 },
-    end: { x: 0, y: 1 },
-  },
-  mark: ['#FFC9A3', '#FFA177', '#E8743D'],
-} as const;
+export const themes: Record<Scheme, Theme> = { dark: withHelpers(dark), light: withHelpers(light) };
+
+// The chosen theme is a per-device preference, not account data: kept on the phone with the
+// session's store (no extra dependency; nothing secret about it). Dark is the default.
+const STORAGE_KEY = 'sparc.theme';
+let mode: Scheme = 'dark';
+let restored = false;
+const listeners = new Set<() => void>();
+
+function publish(next: Scheme) {
+  mode = next;
+  // Native pieces we don't draw — alerts, the date picker, the keyboard — follow this.
+  Appearance.setColorScheme(next);
+  listeners.forEach((listener) => listener());
+}
+
+/** Cold start: read the saved choice before the first frame, so the app never flashes. */
+export async function restoreThemeMode(): Promise<void> {
+  let saved: string | null = null;
+  try {
+    saved = await SecureStore.getItemAsync(STORAGE_KEY);
+  } catch {
+    // Unreadable: keep the default.
+  }
+  restored = true;
+  publish(saved === 'light' ? 'light' : 'dark');
+}
+
+export async function setThemeMode(next: Scheme): Promise<void> {
+  publish(next);
+  try {
+    await SecureStore.setItemAsync(STORAGE_KEY, next);
+  } catch {
+    // Not saved: the app still switches; the next cold start falls back to dark.
+  }
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function useThemeMode(): Scheme {
+  return useSyncExternalStore(subscribe, () => mode);
+}
+
+export function useThemeRestored(): boolean {
+  return useSyncExternalStore(subscribe, () => restored);
+}
+
+export function useTheme(): Theme {
+  return themes[useThemeMode()];
+}
+
+// What StyleSheet.create accepts; intersecting with it keeps 'row', 'center'… literal.
+type Styles = Parameters<typeof StyleSheet.create>[0];
+
+/**
+ * A themed StyleSheet. Call at module level in place of StyleSheet.create; the returned hook
+ * gives the sheet for the current theme. Each theme's sheet is built once and reused.
+ */
+export function makeStyles<S extends Styles>(factory: (theme: Theme) => S & Styles) {
+  const sheets = new Map<Theme, Readonly<S>>();
+  return function useStyles(): Readonly<S> {
+    const theme = useTheme();
+    let sheet = sheets.get(theme);
+    if (!sheet) {
+      sheet = StyleSheet.create(factory(theme));
+      sheets.set(theme, sheet);
+    }
+    return sheet;
+  };
+}
 
 export const radii = {
   card: 28,
@@ -99,24 +113,6 @@ export const spacing = {
   gutter: 20, // page side padding
   screenTop: 60, // header offset on the board's 390 × 844 frames, safe area included
 } as const;
-
-// React Native `boxShadow` takes the CSS syntax. On midnight a drop shadow barely shows, so
-// surfaces separate by colour and hairlines; the coloured glows mark the two accents.
-export const shadows = {
-  card: 'inset 0 0 0 1px #1E2533, 0 10px 24px rgba(0,0,0,0.35)',
-  primaryButton: '0 10px 22px -10px rgba(46,107,255,0.8)',
-  addButton: '0 12px 26px -10px rgba(255,161,119,0.75)',
-  outline: 'inset 0 0 0 1px #2A3242', // secondary buttons, idle inputs
-  outlineQuiet: 'inset 0 0 0 1px #3A4356', // "Load older"
-  fieldFocus: 'inset 0 0 0 2px #2E6BFF',
-  fieldError: 'inset 0 0 0 2px #FF6B5E',
-  segmentLift: '0 2px 8px rgba(0,0,0,0.4)',
-  monthCard: '0 22px 44px -18px rgba(255,161,119,0.55)',
-  tabBar: '0 -1px 0 #1E2533',
-  divider: 'inset 0 1px 0 #222A38', // between rows in a card
-} as const;
-
-export const tabBarBackground = 'rgba(14,18,27,0.94)';
 
 // Plus Jakarta Sans ships one file per weight, so each weight is its own family.
 // Never pair these with `fontWeight` — iOS may fall back to the system font.

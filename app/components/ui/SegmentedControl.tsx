@@ -1,10 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors, radii, shadows, type } from '@/lib/theme';
+import { makeStyles, radii, type } from '@/lib/theme';
 
 type Option<T extends string> = { value: T; label: string };
 
-// The board's Expense / Income switch: a hairline track, the chosen option lifted in white.
+// The board's Expense / Income switch: a recessed track, the chosen option lifted out of it.
 export function SegmentedControl<T extends string>({
   label,
   options,
@@ -16,6 +16,7 @@ export function SegmentedControl<T extends string>({
   value: T;
   onChange: (value: T) => void;
 }) {
+  const styles = useStyles();
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.track}>
       {options.map((option) => {
@@ -36,13 +37,13 @@ export function SegmentedControl<T extends string>({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   track: {
     flexDirection: 'row',
     gap: 4,
     padding: 4,
     borderRadius: radii.pill,
-    backgroundColor: colors.segmentTrack,
+    backgroundColor: t.colors.segmentTrack,
   },
   option: {
     flex: 1,
@@ -51,6 +52,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  selected: { backgroundColor: colors.segmentThumb, boxShadow: shadows.segmentLift },
-  text: { ...type.buttonSmall, color: colors.ink },
-});
+  selected: { backgroundColor: t.colors.segmentThumb, boxShadow: t.shadows.segmentLift },
+  text: { ...type.buttonSmall, color: t.colors.ink },
+}));

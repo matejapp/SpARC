@@ -1,10 +1,10 @@
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 
 import { CalendarIcon, ChevronIcon } from '@/components/icons';
 import { dateLabel, fromIsoDate, MIN_ENTRY_DATE, toIsoDate } from '@/lib/dates';
-import { colors, radii, scheme, shadows, type } from '@/lib/theme';
+import { makeStyles, radii, type, useTheme } from '@/lib/theme';
 import type { IsoDate } from '@/types/api';
 
 // The board's Date row (56 high, calendar icon, caption above the value, chevron). Tapping it
@@ -21,6 +21,8 @@ export function DateField({
   onChange: (value: IsoDate) => void;
   error?: string;
 }) {
+  const styles = useStyles();
+  const { colors, scheme, shadows } = useTheme();
   const [open, setOpen] = useState(false);
   const today = new Date();
 
@@ -67,26 +69,26 @@ export function DateField({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   wrap: { gap: 6 },
   row: {
     height: 56,
     borderRadius: radii.field,
-    backgroundColor: colors.surface,
-    boxShadow: shadows.outline,
+    backgroundColor: t.colors.surface,
+    boxShadow: t.shadows.outline,
     paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
   text: { flex: 1 },
-  caption: { ...type.fieldCaption, color: colors.ink2 },
-  value: { ...type.fieldValue, color: colors.ink },
+  caption: { ...type.fieldCaption, color: t.colors.ink2 },
+  value: { ...type.fieldValue, color: t.colors.ink },
   inline: {
-    backgroundColor: colors.surface,
+    backgroundColor: t.colors.surface,
     borderRadius: radii.field,
-    boxShadow: shadows.outline,
+    boxShadow: t.shadows.outline,
     paddingHorizontal: 8,
   },
-  error: { ...type.errorText, color: colors.error },
-});
+  error: { ...type.errorText, color: t.colors.error },
+}));

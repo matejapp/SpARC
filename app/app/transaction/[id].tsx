@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '@/api/client';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { RowsSkeleton } from '@/components/ui/Skeleton';
 import { useDeleteTransaction, useTransaction, useUpdateTransaction } from '@/hooks/useTransactions';
 import { formatAmount } from '@/lib/money';
-import { colors, radii, shadows, spacing, type } from '@/lib/theme';
+import { makeStyles, radii, spacing, type } from '@/lib/theme';
 import type { TransactionResponse } from '@/types/api';
 
 function toDraft(t: TransactionResponse): TransactionDraft {
@@ -26,6 +26,7 @@ function toDraft(t: TransactionResponse): TransactionDraft {
 // The route segment [id] makes this a dynamic route: /transaction/<id> lands here with the id in
 // useLocalSearchParams. The id is only a lookup key; the API answers 404 for anyone else's.
 export default function TransactionScreen() {
+  const styles = useStyles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const transaction = useTransaction(id);
@@ -98,15 +99,15 @@ export default function TransactionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.ground, paddingHorizontal: spacing.gutter, gap: 20 },
+const useStyles = makeStyles((t) => ({
+  screen: { flex: 1, backgroundColor: t.colors.ground, paddingHorizontal: spacing.gutter, gap: 20 },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: t.colors.surface,
     borderRadius: radii.card,
-    boxShadow: shadows.card,
+    boxShadow: t.shadows.card,
     padding: 20,
     gap: 12,
   },
-  messageTitle: { ...type.headline, color: colors.ink },
-  messageText: { ...type.body, color: colors.ink2 },
-});
+  messageTitle: { ...type.headline, color: t.colors.ink },
+  messageText: { ...type.body, color: t.colors.ink2 },
+}));

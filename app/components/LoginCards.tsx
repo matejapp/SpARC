@@ -1,15 +1,17 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { CardRings } from '@/components/CardRings';
 import { formatAmount } from '@/lib/money';
-import { colors, gradients, radii, shadows, tabularNums, type } from '@/lib/theme';
+import { makeStyles, radii, tabularNums, type, useTheme } from '@/lib/theme';
 
 // The two tilted month cards above the login headline (board → Login). An illustration of the
 // product, not data: the amount is fixed and hidden from screen readers. Corners match the
 // month card (D-032). The front card clips its rings, so its shadow and tilt sit on an outer
 // view; on iOS the clipping would otherwise swallow the shadow.
 export function LoginCards() {
+  const styles = useStyles();
+  const { gradients } = useTheme();
   return (
     <View style={styles.stage} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <LinearGradient {...gradients.cardBack} style={[styles.card, styles.back]} />
@@ -29,7 +31,7 @@ export function LoginCards() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   stage: { height: 196, marginTop: 20 },
   card: { position: 'absolute', borderRadius: radii.bankCard },
   back: { left: 40, top: 20, width: 290, height: 176, transform: [{ rotate: '-7deg' }] },
@@ -38,7 +40,7 @@ const styles = StyleSheet.create({
     top: 12,
     width: 300,
     height: 184,
-    boxShadow: shadows.monthCard,
+    boxShadow: t.shadows.monthCard,
     transform: [{ rotate: '3deg' }],
   },
   frontFace: {
@@ -49,15 +51,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     justifyContent: 'space-between',
   },
-  period: { ...type.tabLabelActive, letterSpacing: 1.68, color: colors.onAccent, alignSelf: 'flex-end' },
-  caption: { ...type.caption, fontFamily: type.label.fontFamily, color: colors.onCard },
+  period: { ...type.tabLabelActive, letterSpacing: 1.68, color: t.colors.onAccent, alignSelf: 'flex-end' },
+  caption: { ...type.caption, fontFamily: type.label.fontFamily, color: t.colors.onCard },
   amount: {
     ...type.display,
     fontSize: 28,
     lineHeight: 34,
     letterSpacing: -0.56,
-    color: colors.onAccent,
+    color: t.colors.onAccent,
     ...tabularNums,
   },
   currency: { ...type.buttonSmall, fontSize: 14 },
-});
+}));

@@ -1,8 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { formatSigned } from '@/lib/money';
-import { categoryTone, colors, radii, shadows, tabularNums, type } from '@/lib/theme';
+import { makeStyles, radii, tabularNums, type, useTheme } from '@/lib/theme';
 import type { TransactionResponse } from '@/types/api';
 
 // One row as the board draws it: 44 × 44 tile with the category icon in its colour (D-032), the description (or the
@@ -19,6 +19,8 @@ export function TransactionRow({
   divider: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const { categoryTone, colors } = useTheme();
   const income = item.type === 'income';
   const ink = income ? colors.income : colors.ink; // the amount
   const tone = categoryTone(item.categoryName, item.type);
@@ -49,9 +51,9 @@ export function TransactionRow({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   row: { height: 68, flexDirection: 'row', alignItems: 'center', gap: 14 },
-  divider: { boxShadow: shadows.divider },
+  divider: { boxShadow: t.shadows.divider },
   pressed: { opacity: 0.6 },
   tile: {
     width: 44,
@@ -61,7 +63,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: { flex: 1, minWidth: 0 },
-  title: { ...type.rowTitle, color: colors.ink },
-  caption: { ...type.caption, color: colors.ink2 },
+  title: { ...type.rowTitle, color: t.colors.ink },
+  caption: { ...type.caption, color: t.colors.ink2 },
   amount: { ...type.rowAmount, ...tabularNums },
-});
+}));

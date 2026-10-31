@@ -1,12 +1,14 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { BackIcon } from '@/components/icons';
-import { colors, radii, shadows, type } from '@/lib/theme';
+import { makeStyles, radii, type, useTheme } from '@/lib/theme';
 
 // Back button and centred title for a pushed screen (settings, transaction detail). The
 // stack's native header is off app-wide so every screen matches the board.
 export function ScreenHeader({ title }: { title: string }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.row}>
       <Pressable
@@ -27,15 +29,15 @@ export function ScreenHeader({ title }: { title: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   slot: { width: 44, height: 44 },
   back: {
     borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-    boxShadow: shadows.outline,
+    backgroundColor: t.colors.surface,
+    boxShadow: t.shadows.outline,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { ...type.modalTitle, flex: 1, textAlign: 'center', color: colors.ink },
-});
+  title: { ...type.modalTitle, flex: 1, textAlign: 'center', color: t.colors.ink },
+}));

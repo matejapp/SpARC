@@ -1,6 +1,6 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-import { colors, radii, shadows, type } from '@/lib/theme';
+import { makeStyles, radii, type, useTheme } from '@/lib/theme';
 
 type Variant = 'primary' | 'secondary' | 'quiet' | 'link' | 'danger';
 
@@ -25,6 +25,9 @@ export function Button({
   disabled = false,
   tall = false,
 }: Props) {
+  const labelColor = useLabelColor();
+  const styles = useStyles();
+  const { colors } = useTheme();
   const inactive = disabled || loading;
   const filled = variant === 'primary';
   const shown = loading && loadingLabel ? loadingLabel : label;
@@ -61,15 +64,15 @@ export function Button({
   );
 }
 
-const labelColor = StyleSheet.create({
-  primary: { color: colors.onPrimary },
-  secondary: { color: colors.ink },
-  quiet: { color: colors.ink },
-  link: { color: colors.accentText },
-  danger: { color: colors.error },
-});
+const useLabelColor = makeStyles((t) => ({
+  primary: { color: t.colors.onPrimary },
+  secondary: { color: t.colors.ink },
+  quiet: { color: t.colors.ink },
+  link: { color: t.colors.accentText },
+  danger: { color: t.colors.error },
+}));
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   base: {
     height: 52,
     borderRadius: radii.pill,
@@ -79,11 +82,11 @@ const styles = StyleSheet.create({
   },
   tall: { height: 56 },
   content: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  primary: { backgroundColor: colors.primary, boxShadow: shadows.primaryButton },
-  primaryInactive: { backgroundColor: colors.muted, boxShadow: 'none' },
-  secondary: { backgroundColor: colors.surface, boxShadow: shadows.outline },
-  quiet: { backgroundColor: 'transparent', boxShadow: shadows.outlineQuiet, height: 48 },
+  primary: { backgroundColor: t.colors.primary, boxShadow: t.shadows.primaryButton },
+  primaryInactive: { backgroundColor: t.colors.muted, boxShadow: 'none' },
+  secondary: { backgroundColor: t.colors.surface, boxShadow: t.shadows.outline },
+  quiet: { backgroundColor: 'transparent', boxShadow: t.shadows.outlineQuiet, height: 48 },
   link: { backgroundColor: 'transparent', height: 44, paddingHorizontal: 8 },
   danger: { backgroundColor: 'transparent', height: 44 },
   pressed: { opacity: 0.85 },
-});
+}));

@@ -1,14 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 
 import { CardRings } from '@/components/CardRings';
 import { Wordmark } from '@/components/Wordmark';
 import { formatSigned, formatSignedAmount } from '@/lib/money';
-import { colors, gradients, radii, shadows, spacing, tabularNums, type } from '@/lib/theme';
+import { makeStyles, radii, spacing, tabularNums, type, useTheme } from '@/lib/theme';
 import type { DashboardSummaryResponse } from '@/types/api';
 
-// The current month on the orange card (board → Dashboard, first-run Dashboard). The accent
+// The current month on the cantaloupe card (board → Dashboard, first-run Dashboard). The accent
 // gradient is reserved for this card, the add button and the icon (D-027). Amounts on it are
 // one colour: on the accent, colour can't carry meaning, so the signs do.
 //
@@ -19,6 +19,7 @@ const MAX_WIDTH = 380;
 const MIN_HEIGHT = 196; // below this the four rows no longer fit (very narrow phones)
 
 function Chip() {
+  const { colors } = useTheme();
   return (
     <Svg width={38} height={28} viewBox="0 0 38 28" accessible={false}>
       <Rect x={0.5} y={0.5} width={37} height={27} rx={6} fill={colors.cardChip} />
@@ -33,6 +34,7 @@ function Chip() {
 }
 
 function Contactless() {
+  const { colors } = useTheme();
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" accessible={false}>
       <Path
@@ -53,6 +55,8 @@ export function MonthCard({
   code: string; // "OCT 2026"
   summary: DashboardSummaryResponse | undefined; // undefined while loading
 }) {
+  const styles = useStyles();
+  const { colors, gradients } = useTheme();
   const empty = summary !== undefined && summary.totalIncome === 0 && summary.totalExpense === 0;
   const { width: screenWidth } = useWindowDimensions();
   const width = Math.min(screenWidth - spacing.gutter * 2, MAX_WIDTH);
@@ -119,8 +123,8 @@ export function MonthCard({
   );
 }
 
-const styles = StyleSheet.create({
-  lift: { alignSelf: 'center', borderRadius: radii.bankCard, boxShadow: shadows.monthCard },
+const useStyles = makeStyles((t) => ({
+  lift: { alignSelf: 'center', borderRadius: radii.bankCard, boxShadow: t.shadows.monthCard },
   card: {
     flex: 1,
     borderRadius: radii.bankCard,
@@ -131,14 +135,14 @@ const styles = StyleSheet.create({
   },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  code: { ...type.cardCode, color: colors.onAccent },
-  caption: { ...type.cardCaption, color: colors.onCard },
-  amount: { ...type.cardAmount, ...tabularNums, color: colors.onAccent, marginTop: 2 },
+  code: { ...type.cardCode, color: t.colors.onAccent },
+  caption: { ...type.cardCaption, color: t.colors.onCard },
+  amount: { ...type.cardAmount, ...tabularNums, color: t.colors.onAccent, marginTop: 2 },
   currency: { ...type.cardCurrency },
   stats: { flexDirection: 'row', gap: 24 },
-  statLabel: { ...type.cardStatLabel, color: colors.onCard },
-  statValue: { ...type.cardStatValue, ...tabularNums, color: colors.onAccent },
-  bar: { backgroundColor: colors.onCardSkeleton, borderRadius: 6 },
+  statLabel: { ...type.cardStatLabel, color: t.colors.onCard },
+  statValue: { ...type.cardStatValue, ...tabularNums, color: t.colors.onAccent },
+  bar: { backgroundColor: t.colors.onCardSkeleton, borderRadius: 6 },
   barAmount: { height: 28, width: 170, marginTop: 6 },
   barStat: { height: 30, width: 96 },
-});
+}));

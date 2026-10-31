@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View, type TextInputInstance } from 'react-native';
+import { Alert, Pressable, Text, View, type TextInputInstance } from 'react-native';
 
 import { register, signIn } from '@/api/auth';
 import { ApiError } from '@/api/client';
@@ -10,7 +10,7 @@ import { BackIcon } from '@/components/icons';
 import { ErrorBanner } from '@/components/ui/Banner';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
-import { colors, radii, shadows, type } from '@/lib/theme';
+import { makeStyles, radii, type, useTheme } from '@/lib/theme';
 import type { RegisterRequest } from '@/types/api';
 
 type Fields = { username?: string; email?: string; password?: string };
@@ -33,6 +33,8 @@ function validate(username: string, email: string, password: string): Fields {
 
 // Derived from Login (the board draws no register screen): same fields, same buttons.
 export default function RegisterScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -76,6 +78,7 @@ export default function RegisterScreen() {
 
   return (
     <FormScreen
+      arc
       footer={
         <>
           <Button
@@ -157,13 +160,13 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   back: {
     width: 44,
     height: 44,
     borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-    boxShadow: shadows.outline,
+    backgroundColor: t.colors.surface,
+    boxShadow: t.shadows.outline,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -172,9 +175,9 @@ const styles = StyleSheet.create({
     fontSize: 30,
     lineHeight: 34,
     letterSpacing: -0.6,
-    color: colors.ink,
+    color: t.colors.ink,
     marginTop: 20,
   },
-  sub: { ...type.body, color: colors.ink2, marginTop: 8 },
+  sub: { ...type.body, color: t.colors.ink2, marginTop: 8 },
   form: { gap: 14, marginTop: 24 },
-});
+}));

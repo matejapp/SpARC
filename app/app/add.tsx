@@ -1,14 +1,16 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 
 import { CloseIcon } from '@/components/icons';
 import { emptyDraft, TransactionForm } from '@/components/TransactionForm';
 import { useCreateTransaction } from '@/hooks/useTransactions';
-import { colors, radii, shadows, type } from '@/lib/theme';
+import { makeStyles, radii, type, useTheme } from '@/lib/theme';
 
 // The add modal (board → Add transaction), opened by the tab bar's + and by the dashboard's
 // Expense / Income buttons, which pass ?type= to start on the right side of the switch.
 export default function AddTransactionScreen() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const params = useLocalSearchParams<{ type?: string }>();
   const create = useCreateTransaction();
 
@@ -41,17 +43,17 @@ export default function AddTransactionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   close: {
     width: 48,
     height: 48,
     borderRadius: radii.pill,
-    backgroundColor: colors.surface,
+    backgroundColor: t.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: shadows.card,
+    boxShadow: t.shadows.card,
   },
-  heading: { ...type.modalTitle, color: colors.ink },
+  heading: { ...type.modalTitle, color: t.colors.ink },
   spacer: { width: 48 },
-});
+}));

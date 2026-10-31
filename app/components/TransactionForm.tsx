@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { DateField } from '@/components/DateField';
@@ -11,7 +11,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useCategories } from '@/hooks/useTransactions';
 import { todayIso } from '@/lib/dates';
 import { parseAmount } from '@/lib/money';
-import { categoryTone, colors, radii, scheme, shadows, tabularNums, type } from '@/lib/theme';
+import { makeStyles, radii, tabularNums, type, useTheme } from '@/lib/theme';
 import type { IsoDate, TransactionRequest, TransactionType } from '@/types/api';
 
 export type TransactionDraft = {
@@ -59,6 +59,8 @@ export function TransactionForm({
   topInset?: boolean;
   after?: ReactNode;
 }) {
+  const styles = useStyles();
+  const { categoryTone, colors, scheme, shadows } = useTheme();
   const [draft, setDraft] = useState(initial);
   const [errors, setErrors] = useState<Errors>({});
   const [lastError, setLastError] = useState<Error | null>(null);
@@ -222,10 +224,10 @@ export function TransactionForm({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   segment: { marginTop: 24 },
   amountBlock: { alignItems: 'center', marginTop: 28 },
-  amountLabel: { ...type.label, color: colors.ink2 },
+  amountLabel: { ...type.label, color: t.colors.ink2 },
   amountRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
   amountInput: {
     ...type.amountInput,
@@ -238,13 +240,13 @@ const styles = StyleSheet.create({
     height: 32,
     paddingHorizontal: 12,
     borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-    boxShadow: shadows.outline,
+    backgroundColor: t.colors.surface,
+    boxShadow: t.shadows.outline,
     justifyContent: 'center',
   },
-  currencyText: { ...type.pill, color: colors.ink },
+  currencyText: { ...type.pill, color: t.colors.ink },
   section: { marginTop: 28, gap: 10 },
-  sectionLabel: { ...type.label, color: colors.ink2 },
+  sectionLabel: { ...type.label, color: t.colors.ink2 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     height: 44,
@@ -256,23 +258,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chipDot: { width: 8, height: 8, borderRadius: 4 },
-  chipSelected: { backgroundColor: colors.primary, boxShadow: 'none' },
-  chipText: { ...type.chip, color: colors.ink },
-  chipTextSelected: { color: colors.onPrimary },
-  chipSkeleton: { height: 44, borderRadius: radii.pill, backgroundColor: colors.hairline },
+  chipSelected: { backgroundColor: t.colors.primary, boxShadow: 'none' },
+  chipText: { ...type.chip, color: t.colors.ink },
+  chipTextSelected: { color: t.colors.onPrimary },
+  chipSkeleton: { height: 44, borderRadius: radii.pill, backgroundColor: t.colors.hairline },
   inlineError: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  inlineErrorText: { ...type.body, color: colors.ink },
+  inlineErrorText: { ...type.body, color: t.colors.ink },
   fields: { gap: 10, marginTop: 24 },
   descriptionRow: {
     height: 56,
     borderRadius: radii.field,
-    backgroundColor: colors.surface,
-    boxShadow: shadows.outline,
+    backgroundColor: t.colors.surface,
+    boxShadow: t.shadows.outline,
     paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  descriptionInput: { ...type.fieldValue, flex: 1, height: '100%', color: colors.ink, padding: 0 },
-  error: { ...type.errorText, color: colors.error, marginTop: 8 },
-});
+  descriptionInput: { ...type.fieldValue, flex: 1, height: '100%', color: t.colors.ink, padding: 0 },
+  error: { ...type.errorText, color: t.colors.error, marginTop: 8 },
+}));
