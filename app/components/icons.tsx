@@ -51,3 +51,21 @@ export function CloseIcon({ color, size = 18 }: IconProps) {
     </Svg>
   );
 }
+
+export function BackIcon({ color, size = 20 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" accessible={false}>
+      <Path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function EyeIcon({ color, size = 20, crossed }: IconProps & { crossed: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" accessible={false}>
+      <Path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" fill="none" stroke={color} strokeWidth={1.8} />
+      {crossed ? <Path d="M4 4l16 16" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" /> : null}
+    </Svg>
+  );
+}

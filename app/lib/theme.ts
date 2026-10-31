@@ -17,6 +17,9 @@ export const colors = {
   onCard: '#FFE9DE', // small text on the orange card
   onCardPast: '#E4DED9', // small text on a charcoal card
   onInk: '#FFFFFF',
+  placeholder: '#8A847E',
+  dotInactive: '#D6D0CA', // inactive pager dot, outline of a quiet button
+  overlay: 'rgba(31,29,27,0.08)', // pressed state on light surfaces
 } as const;
 
 // The accent gradient appears only on the current-month card, the add button and the
@@ -53,7 +56,12 @@ export const shadows = {
   card: '0 1px 2px rgba(31,29,27,0.04), 0 8px 24px rgba(31,29,27,0.06)',
   primaryButton: '0 8px 18px -8px rgba(31,29,27,0.5)',
   addButton: '0 12px 24px -10px rgba(184,70,28,0.7)',
-  outline: 'inset 0 0 0 1px #ECE8E4', // secondary buttons, chips
+  outline: 'inset 0 0 0 1px #ECE8E4', // secondary buttons, chips, idle inputs
+  outlineQuiet: 'inset 0 0 0 1px #DCD6D0', // "Load older"
+  fieldFocus: 'inset 0 0 0 2px #1F1D1B',
+  fieldError: 'inset 0 0 0 2px #C0362C',
+  segmentLift: '0 1px 2px rgba(31,29,27,0.08), 0 4px 10px rgba(31,29,27,0.06)',
+  monthCard: '0 20px 40px -16px rgba(184,70,28,0.55)',
   tabBar: '0 -1px 0 #ECE8E4',
 } as const;
 
@@ -75,6 +83,15 @@ export const type = {
   screenTitle: { fontFamily: fonts.extraBold, fontSize: 24, lineHeight: 30, letterSpacing: -0.48 },
   title: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 28 },
   modalTitle: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 22 },
+  sectionTitle: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 26 },
+  greetingName: { fontFamily: fonts.extraBold, fontSize: 26, lineHeight: 32, letterSpacing: -0.52 },
+  label: { fontFamily: fonts.semiBold, fontSize: 13, lineHeight: 18 },
+  input: { fontFamily: fonts.medium, fontSize: 16 },
+  rowTitle: { fontFamily: fonts.semiBold, fontSize: 15, lineHeight: 20 },
+  rowAmount: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 20 },
+  dayHeading: { fontFamily: fonts.bold, fontSize: 13, lineHeight: 18, letterSpacing: 0.78 },
+  bannerText: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20 },
+  errorText: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
   headline: { fontFamily: fonts.semiBold, fontSize: 16, lineHeight: 22 },
   body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22 },
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },

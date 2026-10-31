@@ -45,6 +45,7 @@ export default function RootLayout() {
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="add" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="settings" />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="(auth)" />

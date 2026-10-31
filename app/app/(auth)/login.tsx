@@ -1,69 +1,116 @@
+import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRef, useState } from 'react';
+import { StyleSheet, Text, View, type TextInputInstance } from 'react-native';
 
-import { SparcMark } from '@/components/SparcMark';
+import { signIn } from '@/api/auth';
+import { ApiError } from '@/api/client';
+import { FormScreen } from '@/components/FormScreen';
+import { LoginCards } from '@/components/LoginCards';
+import { ErrorBanner } from '@/components/ui/Banner';
+import { Button } from '@/components/ui/Button';
+import { TextField } from '@/components/ui/TextField';
 import { Wordmark } from '@/components/Wordmark';
-import { colors, radii, shadows, spacing, type } from '@/lib/theme';
+import { colors, type } from '@/lib/theme';
 
-// Placeholder: brand, headline and the primary button as drawn. The form, validation
-// and the real sign-in arrive with card #25.
+type Fields = { login?: string; password?: string };
+
 export default function LoginScreen() {
-  const insets = useSafeAreaInsets();
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Fields>({});
+  const passwordRef = useRef<TextInputInstance>(null);
+
+  // useMutation tracks one async action — pending, error — so the screen does not juggle its own
+  // flags. On success there is nothing to navigate: saving the tokens flips the session, and the
+  // root layout's Stack.Protected swaps the login screen for the app.
+  // gcTime 0: a settled mutation keeps its variables — the password — in memory until collected.
+  const mutation = useMutation({
+    mutationFn: signIn,
+    gcTime: 0,
+    onError: (e) => setFieldErrors(fieldsFrom(e)),
+  });
+
+  function submit() {
+    const errors: Fields = {};
+    if (!login.trim()) errors.login = 'Enter your username or email.';
+    if (!password) errors.password = 'Enter your password.';
+    setFieldErrors(errors);
+    if (errors.login || errors.password) return;
+    mutation.mutate({ login: login.trim(), password });
+  }
+
+  // A rejected login has no field errors: the API answers one message for every cause (D-021).
+  const banner = mutation.error && !hasFields(mutation.error) ? mutation.error.message : null;
+
   return (
-    <View
-      style={[
-        styles.screen,
-        { paddingTop: insets.top + 12, paddingBottom: Math.max(insets.bottom, 16) },
-      ]}
+    <FormScreen
+      footer={
+        <>
+          <Button label="Log in" loadingLabel="Logging in…" loading={mutation.isPending} onPress={submit} />
+          <Button label="Create an account" variant="secondary" onPress={() => router.push('/register')} />
+        </>
+      }
     >
-      <View style={styles.brand}>
-        <SparcMark size={36} />
-        <Wordmark />
-      </View>
+      <Wordmark />
+      <LoginCards />
 
-      <View style={styles.copy}>
-        <Text accessibilityRole="header" style={styles.headline}>
-          Know where your money goes.
-        </Text>
-        <Text style={styles.sub}>Log in to see this month.</Text>
-      </View>
+      <Text accessibilityRole="header" style={styles.headline}>
+        Know where your money goes.
+      </Text>
+      <Text style={styles.sub}>Log in to see this month.</Text>
 
-      <Pressable
-        onPress={() => router.replace('/')}
-        accessibilityRole="button"
-        style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
-      >
-        <Text style={styles.primaryLabel}>Continue to the app</Text>
-      </Pressable>
-    </View>
+      <View style={styles.form}>
+        <TextField
+          label="Username or email"
+          value={login}
+          onChangeText={setLogin}
+          error={fieldErrors.login}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="username"
+          textContentType="username"
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          submitBehavior="submit"
+        />
+        <TextField
+          ref={passwordRef}
+          label="Password"
+          secret
+          value={password}
+          onChangeText={setPassword}
+          error={fieldErrors.password}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="current-password"
+          textContentType="password"
+          returnKeyType="go"
+          onSubmitEditing={submit}
+        />
+        {banner ? <ErrorBanner message={banner} /> : null}
+      </View>
+    </FormScreen>
   );
 }
 
+function hasFields(error: Error) {
+  return error instanceof ApiError && Object.keys(error.fieldErrors).length > 0;
+}
+
+function fieldsFrom(error: Error): Fields {
+  return error instanceof ApiError ? { login: error.fieldErrors.login, password: error.fieldErrors.password } : {};
+}
+
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.ground,
-    paddingHorizontal: spacing.gutter,
-  },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  copy: { flex: 1, justifyContent: 'center', gap: 8 },
   headline: {
     ...type.display,
     fontSize: 30,
     lineHeight: 34,
     letterSpacing: -0.6,
     color: colors.ink,
+    marginTop: 20,
   },
-  sub: { ...type.body, color: colors.ink2 },
-  primary: {
-    height: 52,
-    borderRadius: radii.pill,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: shadows.primaryButton,
-  },
-  pressed: { opacity: 0.85 },
-  primaryLabel: { ...type.button, color: colors.onInk },
+  sub: { ...type.body, color: colors.ink2, marginTop: 8 },
+  form: { gap: 14, marginTop: 24 },
 });
