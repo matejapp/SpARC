@@ -7,9 +7,8 @@ namespace Sparc.Api.Repositories;
 
 public sealed class BillOccurrenceRepository(SparcDbContext db) : IBillOccurrenceRepository
 {
-    // One query: the (UserId, DueDate) index serves the range, the bill and its category come in
-    // through joins, and the expense id through a correlated lookup on the unique
-    // Transactions.BillOccurrenceId index. The range cap in OccurrenceListQuery bounds the rows.
+    // One query: the (UserId, DueDate) index serves the range. The range cap in
+    // OccurrenceListQuery bounds the rows.
     public Task<List<OccurrenceView>> ListAsync(Guid userId, DateOnly from, DateOnly to, Guid? billId)
     {
         var mine = db.BillOccurrences.AsNoTracking()
@@ -21,7 +20,26 @@ public sealed class BillOccurrenceRepository(SparcDbContext db) : IBillOccurrenc
             mine = mine.Where(o => o.RecurringBillId == id);
         }
 
-        return mine
+        return Project(mine, userId).ToListAsync();
+    }
+
+    // Pending months of active bills due up to `until`: anything overdue, then what is coming.
+    // The (UserId, DueDate) index serves it, and the limit bounds it.
+    public Task<List<OccurrenceView>> UpcomingAsync(Guid userId, DateOnly until, int limit) =>
+        Project(
+                db.BillOccurrences.AsNoTracking()
+                    .Where(o => o.UserId == userId
+                                && o.DueDate <= until
+                                && o.Status == BillOccurrenceStatus.Pending
+                                && o.RecurringBill.IsActive),
+                userId)
+            .Take(limit)
+            .ToListAsync();
+
+    // By due date, then bill name; the bill and its category through joins, the expense id
+    // through a correlated lookup on the unique Transactions.BillOccurrenceId index.
+    private IQueryable<OccurrenceView> Project(IQueryable<BillOccurrence> occurrences, Guid userId) =>
+        occurrences
             .OrderBy(o => o.DueDate).ThenBy(o => o.RecurringBill.Name).ThenBy(o => o.Id)
             .Select(o => new OccurrenceView(
                 o.Id,
@@ -37,9 +55,7 @@ public sealed class BillOccurrenceRepository(SparcDbContext db) : IBillOccurrenc
                 db.Transactions
                     .Where(t => t.UserId == userId && t.BillOccurrenceId == o.Id)
                     .Select(t => (Guid?)t.Id)
-                    .FirstOrDefault()))
-            .ToListAsync();
-    }
+                    .FirstOrDefault()));
 
     public Task<BillOccurrence?> FindForPayAsync(Guid userId, Guid id) =>
         db.BillOccurrences

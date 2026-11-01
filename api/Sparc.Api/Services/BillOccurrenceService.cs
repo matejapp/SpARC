@@ -23,6 +23,17 @@ public sealed class BillOccurrenceService(
         return views.Select(ToResponse).ToList();
     }
 
+    /// <summary>How far ahead the dashboard looks, and how many months it shows at most.</summary>
+    public const int UpcomingDays = 30;
+    public const int UpcomingLimit = 10;
+
+    public async Task<List<OccurrenceResponse>> UpcomingAsync(Guid userId, UpcomingOccurrencesQuery query)
+    {
+        var today = query.Today ?? BillSchedule.Today();
+        var views = await occurrences.UpcomingAsync(userId, today.AddDays(UpcomingDays), UpcomingLimit);
+        return views.Select(ToResponse).ToList();
+    }
+
     /// <summary>
     /// Pending → paid, plus its expense, in one save. The expense takes the month's own amount and
     /// the bill's category and name; the user corrects the amount later by editing the expense.

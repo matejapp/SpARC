@@ -28,6 +28,12 @@ public interface IBillOccurrenceRepository
     Task<List<OccurrenceView>> ListAsync(Guid userId, DateOnly from, DateOnly to, Guid? billId);
 
     /// <summary>
+    /// Unpaid, due on or before <paramref name="until"/> (overdue ones included), by due date,
+    /// at most <paramref name="limit"/>.
+    /// </summary>
+    Task<List<OccurrenceView>> UpcomingAsync(Guid userId, DateOnly until, int limit);
+
+    /// <summary>
     /// Tracked, with its bill and the bill's category loaded, for <see cref="PayAsync"/>. Null when
     /// the occurrence does not exist, belongs to another user or its bill is inactive.
     /// </summary>

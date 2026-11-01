@@ -14,6 +14,14 @@ public sealed class OccurrencesController(IBillOccurrenceService occurrenceServi
     public async Task<ActionResult<List<OccurrenceResponse>>> List([FromQuery] OccurrenceListQuery query) =>
         await occurrenceService.ListAsync(CurrentUserId, query);
 
+    /// <summary>
+    /// The dashboard's bills: unpaid months that are overdue or due within 30 days of the phone's
+    /// today, overdue first, at most 10.
+    /// </summary>
+    [HttpGet("upcoming")]
+    public async Task<ActionResult<List<OccurrenceResponse>>> Upcoming([FromQuery] UpcomingOccurrencesQuery query) =>
+        await occurrenceService.UpcomingAsync(CurrentUserId, query);
+
     /// <summary>Marks one month paid and creates its expense. 409 when it is already paid.</summary>
     [HttpPost("{id:guid}/pay")]
     public async Task<ActionResult<TransactionResponse>> Pay(Guid id, PayOccurrenceRequest request)
