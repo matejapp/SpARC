@@ -7,8 +7,10 @@ import { MinusIcon, PlusIcon, WalletIcon } from '@/components/icons';
 import { BrandArc } from '@/components/BrandArc';
 import { MonthCard } from '@/components/MonthCard';
 import { TransactionRow } from '@/components/TransactionRow';
+import { UpcomingBills } from '@/components/UpcomingBills';
 import { Button } from '@/components/ui/Button';
 import { RowsSkeleton } from '@/components/ui/Skeleton';
+import { useUpcomingBills } from '@/hooks/useBills';
 import { useSummary } from '@/hooks/useDashboard';
 import { useMe } from '@/hooks/useMe';
 import { flattenPages, useTransactionList } from '@/hooks/useTransactions';
@@ -18,7 +20,7 @@ import { makeStyles, radii, spacing, type, useTheme } from '@/lib/theme';
 const RECENT = 4;
 
 // Home (board → Dashboard, and first-run Dashboard when nothing is recorded yet): the greeting,
-// this month's card, quick Expense / Income buttons and the latest transactions. Recent rows
+// this month's card, quick Expense / Income buttons, the bills due and the latest transactions. Recent rows
 // come from the same cached query as the Activity tab, so neither screen fetches twice.
 export default function DashboardScreen() {
   const styles = useStyles();
@@ -28,6 +30,7 @@ export default function DashboardScreen() {
   const me = useMe();
   const summary = useSummary(month.from, month.to);
   const list = useTransactionList();
+  const upcoming = useUpcomingBills(); // the section reads the same cached query; here only to refresh it
 
   const recent = useMemo(() => flattenPages(list.data).slice(0, RECENT), [list.data]);
   const firstRun = list.data?.pages[0]?.totalCount === 0;
@@ -37,6 +40,7 @@ export default function DashboardScreen() {
     me.refetch();
     summary.refetch();
     list.refetch();
+    upcoming.refetch();
   }
 
   return (
@@ -94,6 +98,10 @@ export default function DashboardScreen() {
           </Text>
           <Button label="Add first transaction" onPress={() => router.push('/add')} />
         </View>
+      ) : null}
+
+      {firstRun ? (
+        <UpcomingBills />
       ) : (
         <>
           <View style={styles.quick}>
@@ -116,6 +124,8 @@ export default function DashboardScreen() {
               <Text style={[styles.quickLabel, { color: colors.ink }]}>Income</Text>
             </Pressable>
           </View>
+
+          <UpcomingBills />
 
           <View style={styles.recent}>
             <View style={styles.recentHeader}>

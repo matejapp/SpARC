@@ -14,6 +14,7 @@ import {
   listTransactions,
   updateTransaction,
 } from '@/api/transactions';
+import { rescheduleReminders } from '@/lib/reminders';
 import type { PagedResponse, TransactionRequest, TransactionResponse, TransactionType } from '@/types/api';
 
 // Every transaction query lives under the ['transactions'] prefix, so one invalidation after a
@@ -102,13 +103,15 @@ export function useDeleteTransaction(id: string) {
     // Not the whole ['transactions'] prefix: the detail screen is still on screen while it
     // closes, and refetching a deleted record would flash "no longer exists". Its cache entry
     // is collected once the screen is gone. Deleting a paid bill's expense puts its month back
-    // to unpaid (D-035), so the bills and their months refresh too.
-    onSuccess: () =>
-      Promise.all([
+    // to unpaid (D-035), so the bills, their months and their reminders refresh too.
+    onSuccess: () => {
+      void rescheduleReminders();
+      return Promise.all([
         queryClient.invalidateQueries({ queryKey: LIST_KEY }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
         queryClient.invalidateQueries({ queryKey: ['bills'] }),
         queryClient.invalidateQueries({ queryKey: ['occurrences'] }),
-      ]),
+      ]);
+    },
   });
 }

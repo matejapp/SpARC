@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Linking, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandArc } from '@/components/BrandArc';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { RowsSkeleton } from '@/components/ui/Skeleton';
 import { useBillList, useMonthOccurrences } from '@/hooks/useBills';
 import { dayHeading, dueDay, type Month, monthOf, monthSpan, shiftMonth, todayIso } from '@/lib/dates';
+import { turnOnReminders, useReminderPermission } from '@/lib/reminders';
 import { makeStyles, radii, spacing, type, useTheme } from '@/lib/theme';
 import type { IsoDate } from '@/types/api';
 
@@ -19,7 +20,7 @@ const RANK: Record<OccurrenceState, number> = { overdue: 3, upcoming: 2, paid: 1
 // The Calendar tab (F-05.4, F-05.5; D-028 planned it for Sprint 2). Not drawn on the board —
 // derived from Transactions and Dashboard. A month of due dates; tapping a day lists its bills,
 // and a bill opens its detail. It reads the API only, so it works with notifications denied
-// (F-06.6).
+// (F-06.6); then a quiet note at the bottom says reminders are off.
 export default function CalendarScreen() {
   const styles = useStyles();
   const { colors } = useTheme();
@@ -30,6 +31,7 @@ export default function CalendarScreen() {
   const occurrences = useMonthOccurrences(month);
   const bills = useBillList(); // only to tell "no bills at all" from "nothing this month"
   const noBills = bills.data?.pages[0]?.totalCount === 0;
+  const permission = useReminderPermission();
 
   const { from, to, title } = monthSpan(month);
   // The picked day only counts while its month is on screen.
@@ -137,6 +139,19 @@ export default function CalendarScreen() {
         </Text>
         {body}
       </View>
+
+      {/* The calendar never depends on reminders (F-06.6); without them it says so, quietly. */}
+      {!noBills && permission === 'denied' ? (
+        <View style={styles.note}>
+          <Text style={styles.noteText}>Reminders are off. You can turn them on in Settings.</Text>
+          <Button label="Open Settings" variant="link" onPress={() => Linking.openSettings()} />
+        </View>
+      ) : !noBills && permission === 'undetermined' ? (
+        <View style={styles.note}>
+          <Text style={styles.noteText}>Get a reminder 5 days and 1 day before each bill is due.</Text>
+          <Button label="Turn on reminders" variant="link" onPress={() => void turnOnReminders()} />
+        </View>
+      ) : null}
     </ScrollView>
   );
 }
@@ -154,4 +169,6 @@ const useStyles = makeStyles((t) => ({
   message: { padding: 20, gap: 12, alignItems: 'stretch' },
   messageTitle: { ...type.headline, color: t.colors.ink },
   messageText: { ...type.body, color: t.colors.ink2 },
+  note: { alignItems: 'center', gap: 2, paddingHorizontal: 12 },
+  noteText: { ...type.caption, color: t.colors.ink2, textAlign: 'center' },
 }));

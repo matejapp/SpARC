@@ -7,8 +7,9 @@ import {
 } from '@tanstack/react-query';
 
 import { createBill, deactivateBill, getBill, listBills, updateBill } from '@/api/bills';
-import { listOccurrences, payOccurrence } from '@/api/occurrences';
+import { listOccurrences, listUpcoming, payOccurrence } from '@/api/occurrences';
 import { billMonthsRange, type Month, monthSpan, todayIso } from '@/lib/dates';
+import { cancelMonthReminders, rescheduleReminders } from '@/lib/reminders';
 import type { BillRequest, BillResponse, IsoDate, PagedResponse } from '@/types/api';
 
 // Every bill query lives under ['bills'] (the list, a detail, the dashboard's upcoming), and
@@ -68,13 +69,27 @@ export function useBillOccurrences(billId: string) {
   });
 }
 
+/**
+ * The dashboard's bills, against the phone's today. Under ['bills'], so every bill change and
+ * every payment refreshes it.
+ */
+export function useUpcomingBills() {
+  return useQuery({
+    queryKey: ['bills', 'upcoming'],
+    queryFn: () => listUpcoming(todayIso()),
+  });
+}
+
+// Every bill change also moves its reminders; rescheduling runs in the background.
 function useInvalidateBills() {
   const queryClient = useQueryClient();
-  return () =>
-    Promise.all([
+  return () => {
+    void rescheduleReminders();
+    return Promise.all([
       queryClient.invalidateQueries({ queryKey: ['bills'] }),
       queryClient.invalidateQueries({ queryKey: ['occurrences'] }),
     ]);
+  };
 }
 
 export function useCreateBill() {
@@ -102,6 +117,9 @@ export function usePayOccurrence() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, paidOn = todayIso() }: { id: string; paidOn?: IsoDate }) => payOccurrence(id, paidOn),
+    onSuccess: (_expense, { id }) => {
+      void cancelMonthReminders(id).then(rescheduleReminders);
+    },
     onSettled: () =>
       Promise.all(
         ['occurrences', 'bills', 'transactions', 'dashboard'].map((prefix) =>
@@ -120,14 +138,16 @@ export function useDeactivateBill(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => deactivateBill(id),
-    onSuccess: () =>
-      Promise.all([
+    onSuccess: () => {
+      void rescheduleReminders();
+      return Promise.all([
         queryClient.invalidateQueries({ queryKey: LIST_KEY }),
         queryClient.invalidateQueries({ queryKey: ['bills', 'upcoming'] }),
         queryClient.invalidateQueries({
           queryKey: ['occurrences'],
           predicate: (query) => !(query.queryKey[1] === 'bill' && query.queryKey[2] === id),
         }),
-      ]),
+      ]);
+    },
   });
 }

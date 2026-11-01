@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 
 import { queryClient } from '@/lib/queryClient';
+import { useBillReminders } from '@/lib/reminders';
 import { restoreSession, useSessionStatus } from '@/lib/session';
 import { restoreThemeMode, useTheme, useThemeRestored } from '@/lib/theme';
 
@@ -26,6 +27,7 @@ export default function RootLayout() {
   });
   const session = useSessionStatus();
   const themeRestored = useThemeRestored();
+  useBillReminders(session === 'signedIn');
   // React Navigation paints its own containers (behind screens, during transitions) from its
   // theme; without this it stays light grey under the dark palette.
   const navigationTheme = useMemo(() => {

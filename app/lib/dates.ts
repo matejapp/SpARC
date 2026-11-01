@@ -27,6 +27,20 @@ export function fromIsoDate(iso: IsoDate): Date {
   return new Date(y, m - 1, d);
 }
 
+/** The ISO date `days` calendar days after (or, negative, before) `iso`. */
+export function addDays(iso: IsoDate, days: number): IsoDate {
+  const date = fromIsoDate(iso);
+  date.setDate(date.getDate() + days);
+  return toIsoDate(date);
+}
+
+/** `hour`:00 local time on a calendar date — a bill reminder's moment. */
+export function atLocalHour(iso: IsoDate, hour: number): Date {
+  const date = fromIsoDate(iso);
+  date.setHours(hour, 0, 0, 0);
+  return date;
+}
+
 export function todayIso(): IsoDate {
   return toIsoDate(new Date());
 }
