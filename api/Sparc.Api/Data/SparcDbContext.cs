@@ -12,6 +12,8 @@ public class SparcDbContext(DbContextOptions<SparcDbContext> options, ICurrentUs
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<RecurringBill> RecurringBills => Set<RecurringBill>();
+    public DbSet<BillOccurrence> BillOccurrences => Set<BillOccurrence>();
 
     // Read by the query filters on every query; EF sends it as a parameter.
     private Guid? CurrentUserId => currentUser.Id;
@@ -32,6 +34,8 @@ public class SparcDbContext(DbContextOptions<SparcDbContext> options, ICurrentUs
         // token by its hash, and the token is the credential (D-021).
         modelBuilder.Entity<Transaction>().HasQueryFilter(t => t.UserId == CurrentUserId);
         modelBuilder.Entity<Category>().HasQueryFilter(c => c.UserId == CurrentUserId || c.UserId == null);
+        modelBuilder.Entity<RecurringBill>().HasQueryFilter(b => b.UserId == CurrentUserId);
+        modelBuilder.Entity<BillOccurrence>().HasQueryFilter(o => o.UserId == CurrentUserId);
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
@@ -50,15 +54,16 @@ public class SparcDbContext(DbContextOptions<SparcDbContext> options, ICurrentUs
     }
 
     /// <summary>
-    /// The write side of the query filters: a transaction or category can be inserted, changed or
-    /// deleted only by its owner. System categories (no owner) are written by migrations only,
-    /// which bypass SaveChanges. A refusal is a programming error, so it surfaces as a 500.
+    /// The write side of the query filters: a transaction, category, bill or bill occurrence can be
+    /// inserted, changed or deleted only by its owner. System categories (no owner) are written by
+    /// migrations only, which bypass SaveChanges. A refusal is a programming error, so it surfaces
+    /// as a 500. Every user-owned entity has a UserId property, read here by name.
     /// </summary>
     private void EnforceOwnership()
     {
         foreach (var entry in ChangeTracker.Entries())
         {
-            if (entry.Entity is not (Transaction or Category)
+            if (entry.Entity is not (Transaction or Category or RecurringBill or BillOccurrence)
                 || entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted))
             {
                 continue;

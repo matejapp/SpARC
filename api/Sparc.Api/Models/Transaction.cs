@@ -45,9 +45,16 @@ public class Transaction : ITimestamped
 
     /// <summary>
     /// Set when this expense came from a paid bill. Unique, so a bill is counted once.
-    /// No FK yet: BillOccurrences arrives in iteration 2.
     /// </summary>
     public Guid? BillOccurrenceId { get; set; }
+
+    /// <summary>
+    /// NO ACTION, checked at the end of the statement: a paid occurrence cannot be deleted while
+    /// its expense exists, yet deleting a whole account (which cascades to both) still works.
+    /// RESTRICT would refuse that cascade depending on the order Postgres visits the rows.
+    /// </summary>
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public BillOccurrence? BillOccurrence { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

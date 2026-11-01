@@ -9,6 +9,12 @@ public static class Currencies
 
     public static readonly IReadOnlyList<string> All = [Rsd, Eur, Usd];
 
+    /// <summary>
+    /// <c>'RSD', 'EUR', 'USD'</c>, for the currency CHECKs. Built from <see cref="All"/>, so changing
+    /// the supported set shows up as a pending model change.
+    /// </summary>
+    public static readonly string SqlList = string.Join(", ", All.Select(c => $"'{c}'"));
+
     /// <summary>Case-insensitive; callers store <c>code.ToUpperInvariant()</c>.</summary>
     public static bool IsSupported(string code) => All.Contains(code, StringComparer.OrdinalIgnoreCase);
 }

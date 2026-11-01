@@ -162,6 +162,67 @@ namespace Sparc.Api.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Sparc.Api.Models.BillOccurrence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AmountAtDue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrencyAtDue")
+                        .IsRequired()
+                        .HasColumnType("character(3)");
+
+                    b.Property<DateOnly>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("DueMonth")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("date")
+                        .HasComputedColumnSql("\"DueDate\" - (EXTRACT(DAY FROM \"DueDate\")::integer - 1)", true);
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RecurringBillId")
+                        .HasColumnType("uuid");
+
+                    b.Property<short>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecurringBillId", "DueMonth")
+                        .IsUnique();
+
+                    b.HasIndex("RecurringBillId", "UserId");
+
+                    b.HasIndex("UserId", "DueDate");
+
+                    b.ToTable("BillOccurrences", t =>
+                        {
+                            t.HasCheckConstraint("CK_BillOccurrences_AmountAtDue_Positive", "\"AmountAtDue\" > 0");
+
+                            t.HasCheckConstraint("CK_BillOccurrences_CurrencyAtDue", "\"CurrencyAtDue\" IN ('RSD', 'EUR', 'USD')");
+
+                            t.HasCheckConstraint("CK_BillOccurrences_PaidAt_MatchesStatus", "(\"Status\" = 1) = (\"PaidAt\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_BillOccurrences_Status", "\"Status\" IN (0, 1)");
+                        });
+                });
+
             modelBuilder.Entity("Sparc.Api.Models.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -344,6 +405,64 @@ namespace Sparc.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Sparc.Api.Models.RecurringBill", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("character(3)");
+
+                    b.Property<DateOnly>("FirstDueDate")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("IntervalMonths")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RecurringBills", t =>
+                        {
+                            t.HasCheckConstraint("CK_RecurringBills_Amount_Positive", "\"Amount\" > 0");
+
+                            t.HasCheckConstraint("CK_RecurringBills_Currency", "\"Currency\" IN ('RSD', 'EUR', 'USD')");
+
+                            t.HasCheckConstraint("CK_RecurringBills_IntervalMonths", "\"IntervalMonths\" IS NULL OR \"IntervalMonths\" >= 1");
+
+                            t.HasCheckConstraint("CK_RecurringBills_Name_NotBlank", "btrim(\"Name\") <> ''");
+                        });
+                });
+
             modelBuilder.Entity("Sparc.Api.Models.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -493,12 +612,42 @@ namespace Sparc.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Sparc.Api.Models.BillOccurrence", b =>
+                {
+                    b.HasOne("Sparc.Api.Models.RecurringBill", "RecurringBill")
+                        .WithMany("Occurrences")
+                        .HasForeignKey("RecurringBillId", "UserId")
+                        .HasPrincipalKey("Id", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RecurringBill");
+                });
+
             modelBuilder.Entity("Sparc.Api.Models.Category", b =>
                 {
                     b.HasOne("Sparc.Api.Models.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Sparc.Api.Models.RecurringBill", b =>
+                {
+                    b.HasOne("Sparc.Api.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Sparc.Api.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
 
                     b.Navigation("User");
                 });
@@ -516,6 +665,11 @@ namespace Sparc.Api.Migrations
 
             modelBuilder.Entity("Sparc.Api.Models.Transaction", b =>
                 {
+                    b.HasOne("Sparc.Api.Models.BillOccurrence", "BillOccurrence")
+                        .WithMany()
+                        .HasForeignKey("BillOccurrenceId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("Sparc.Api.Models.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
@@ -527,9 +681,16 @@ namespace Sparc.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("BillOccurrence");
+
                     b.Navigation("Category");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Sparc.Api.Models.RecurringBill", b =>
+                {
+                    b.Navigation("Occurrences");
                 });
 #pragma warning restore 612, 618
         }

@@ -99,6 +99,8 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IRecurringBillRepository, RecurringBillRepository>();
+builder.Services.AddScoped<IRecurringBillService, RecurringBillService>();
 
 // Errors: exceptions → GlobalExceptionHandler; empty error responses (401, unknown route) →
 // status code pages. Both write ProblemDetails, with a traceId to find the server-side log.
