@@ -1,16 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform } from 'react-native';
 
-import { CloseIcon } from '@/components/icons';
+import { ModalHeader } from '@/components/ModalHeader';
 import { emptyDraft, TransactionForm } from '@/components/TransactionForm';
 import { useCreateTransaction } from '@/hooks/useTransactions';
-import { makeStyles, radii, type, useTheme } from '@/lib/theme';
 
 // The add modal (board → Add transaction), opened by the tab bar's + and by the dashboard's
 // Expense / Income buttons, which pass ?type= to start on the right side of the switch.
 export default function AddTransactionScreen() {
-  const styles = useStyles();
-  const { colors } = useTheme();
   const params = useLocalSearchParams<{ type?: string }>();
   const create = useCreateTransaction();
 
@@ -19,22 +16,7 @@ export default function AddTransactionScreen() {
       initial={emptyDraft(params.type === 'income' ? 'income' : 'expense')}
       // On iOS a modal is a sheet below the status bar; on Android it covers the screen.
       topInset={Platform.OS !== 'ios'}
-      header={(t) => (
-        <View style={styles.header}>
-          <Pressable
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-            style={styles.close}
-          >
-            <CloseIcon color={colors.ink} />
-          </Pressable>
-          <Text accessibilityRole="header" style={styles.heading}>
-            {t === 'income' ? 'New income' : 'New expense'}
-          </Text>
-          <View style={styles.spacer} />
-        </View>
-      )}
+      header={(t) => <ModalHeader title={t === 'income' ? 'New income' : 'New expense'} />}
       submitLabel={(t) => (t === 'income' ? 'Save income' : 'Save expense')}
       pending={create.isPending}
       error={create.error}
@@ -42,18 +24,3 @@ export default function AddTransactionScreen() {
     />
   );
 }
-
-const useStyles = makeStyles((t) => ({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  close: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.pill,
-    backgroundColor: t.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: t.shadows.card,
-  },
-  heading: { ...type.modalTitle, color: t.colors.ink },
-  spacer: { width: 48 },
-}));

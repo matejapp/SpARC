@@ -70,10 +70,11 @@ export function EyeIcon({ color, size = 20, crossed }: IconProps & { crossed: bo
   );
 }
 
-export function CalendarIcon({ color, size = 20 }: IconProps) {
+// Also the Calendar tab's icon, heavier when its tab is the current one.
+export function CalendarIcon({ color, size = 20, active = false }: IconProps & { active?: boolean }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" accessible={false}>
-      <Path d="M6 5h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM3 10h18M8 3v4M16 3v4" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M6 5h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM3 10h18M8 3v4M16 3v4" fill="none" stroke={color} strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }

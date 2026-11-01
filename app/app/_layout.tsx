@@ -70,6 +70,10 @@ export default function RootLayout() {
             <Stack.Screen name="add" options={{ presentation: 'modal' }} />
             <Stack.Screen name="settings" />
             <Stack.Screen name="transaction/[id]" />
+            <Stack.Screen name="bills" />
+            <Stack.Screen name="bill/new" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="bill/[id]/index" />
+            <Stack.Screen name="bill/[id]/edit" options={{ presentation: 'modal' }} />
           </Stack.Protected>
           <Stack.Protected guard={!signedIn} redirectTo="/">
             <Stack.Screen name="(auth)" />

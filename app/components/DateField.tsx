@@ -11,20 +11,27 @@ import type { IsoDate } from '@/types/api';
 // opens the platform's own date picker, which is native code that Expo Go already contains:
 //   iOS     — a calendar drawn inline under the row; tap the row again to fold it away.
 //   Android — the system date dialog. Mounting the component opens it; any answer closes it.
-// Dates after today are not offered: an entry is something that already happened.
+// By default it offers 2000-01-01 up to today, a transaction's range: an entry is something
+// that already happened. A bill passes its own range, which runs into the future.
 export function DateField({
   value,
   onChange,
   error,
+  caption = 'Date',
+  minimumDate = MIN_ENTRY_DATE,
+  maximumDate,
 }: {
   value: IsoDate;
   onChange: (value: IsoDate) => void;
   error?: string;
+  caption?: string;
+  minimumDate?: Date;
+  /** Defaults to today. */
+  maximumDate?: Date;
 }) {
   const styles = useStyles();
   const { colors, scheme, shadows } = useTheme();
   const [open, setOpen] = useState(false);
-  const today = new Date();
 
   function handleChange(event: DateTimePickerEvent, date?: Date) {
     if (Platform.OS === 'android') setOpen(false); // the dialog has already closed itself
@@ -36,14 +43,14 @@ export function DateField({
       <Pressable
         onPress={() => setOpen((o) => !o)}
         accessibilityRole="button"
-        accessibilityLabel={`Date, ${dateLabel(value)}`}
+        accessibilityLabel={`${caption}, ${dateLabel(value)}`}
         accessibilityHint="Opens the calendar"
         accessibilityState={{ expanded: Platform.OS === 'ios' ? open : undefined }}
         style={[styles.row, error ? { boxShadow: shadows.fieldError } : null]}
       >
         <CalendarIcon color={colors.ink2} />
         <View style={styles.text}>
-          <Text style={styles.caption}>Date</Text>
+          <Text style={styles.caption}>{caption}</Text>
           <Text style={styles.value}>{dateLabel(value)}</Text>
         </View>
         <ChevronIcon color={colors.ink2} down={Platform.OS === 'ios' && open} />
@@ -55,8 +62,8 @@ export function DateField({
             value={fromIsoDate(value)}
             mode="date"
             display={Platform.OS === 'ios' ? 'inline' : 'default'}
-            minimumDate={MIN_ENTRY_DATE}
-            maximumDate={today}
+            minimumDate={minimumDate}
+            maximumDate={maximumDate ?? new Date()}
             onChange={handleChange}
             accentColor={colors.accentText}
             themeVariant={scheme}

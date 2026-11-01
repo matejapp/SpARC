@@ -101,11 +101,14 @@ export function useDeleteTransaction(id: string) {
     mutationFn: () => deleteTransaction(id),
     // Not the whole ['transactions'] prefix: the detail screen is still on screen while it
     // closes, and refetching a deleted record would flash "no longer exists". Its cache entry
-    // is collected once the screen is gone.
+    // is collected once the screen is gone. Deleting a paid bill's expense puts its month back
+    // to unpaid (D-035), so the bills and their months refresh too.
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: LIST_KEY }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['bills'] }),
+        queryClient.invalidateQueries({ queryKey: ['occurrences'] }),
       ]),
   });
 }

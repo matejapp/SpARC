@@ -68,6 +68,86 @@ export function shortDay(iso: IsoDate, today = todayIso()): string {
   return dayMonth(fromIsoDate(iso));
 }
 
+/** 1 → "1st", 22 → "22nd", 13 → "13th": the day of the month an ISO date falls on. */
+export function dayOrdinal(iso: IsoDate): string {
+  const day = fromIsoDate(iso).getDate();
+  const teen = day % 100 >= 11 && day % 100 <= 13;
+  const suffix = teen ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[day % 10] ?? 'th';
+  return `${day}${suffix}`;
+}
+
+/**
+ * The dates a bill's first due date may take: today up to a year ahead, the schedule's horizon
+ * (D-034). The API allows a day of slack at both ends for the phone's time zone.
+ */
+export function billDueDateRange(now = new Date()): { min: Date; max: Date } {
+  return {
+    min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    max: new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()),
+  };
+}
+
+/** Due-date caption: "Today", "Tomorrow", "10 Nov" ("10 Nov 2027" in another year). */
+export function dueDay(iso: IsoDate, today = todayIso()): string {
+  const ago = daysBefore(iso, today);
+  if (ago === 0) return 'Today';
+  if (ago === -1) return 'Tomorrow';
+  if (ago === 1) return 'Yesterday';
+  const year = iso.slice(0, 4) === today.slice(0, 4) ? '' : ` ${iso.slice(0, 4)}`;
+  return `${dayMonth(fromIsoDate(iso))}${year}`;
+}
+
+/** "November" for an ISO date. */
+export function monthName(iso: IsoDate): string {
+  return MONTHS_LONG[fromIsoDate(iso).getMonth()];
+}
+
+// The calendar tab's month: a year and a 0-based month, as Date counts them.
+export type Month = { year: number; month: number };
+
+export const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+
+export function monthOf(now = new Date()): Month {
+  return { year: now.getFullYear(), month: now.getMonth() };
+}
+
+/** Months later (or earlier, negative); Date rolls the year over. */
+export function shiftMonth(m: Month, by: number): Month {
+  return monthOf(new Date(m.year, m.month + by, 1));
+}
+
+/** First and last day, inclusive, and the title: "November 2026". */
+export function monthSpan(m: Month): { from: IsoDate; to: IsoDate; title: string } {
+  return {
+    from: toIsoDate(new Date(m.year, m.month, 1)),
+    to: toIsoDate(new Date(m.year, m.month + 1, 0)),
+    title: `${MONTHS_LONG[m.month]} ${m.year}`,
+  };
+}
+
+/** The month's days in weeks, Monday first; null pads the first and last week. */
+export function monthGrid(m: Month): (IsoDate | null)[][] {
+  const first = new Date(m.year, m.month, 1);
+  const days = new Date(m.year, m.month + 1, 0).getDate();
+  const cells: (IsoDate | null)[] = Array((first.getDay() + 6) % 7).fill(null); // Sunday is 0
+  for (let d = 1; d <= days; d++) cells.push(toIsoDate(new Date(m.year, m.month, d)));
+  while (cells.length % 7) cells.push(null);
+  const weeks: (IsoDate | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+/**
+ * A bill's months on its detail screen: from the 1st, 11 months back, through the 12-month
+ * schedule. Stays inside the API's 731-day cap (OccurrenceListQuery).
+ */
+export function billMonthsRange(now = new Date()): { from: IsoDate; to: IsoDate } {
+  return {
+    from: toIsoDate(new Date(now.getFullYear(), now.getMonth() - 11, 1)),
+    to: toIsoDate(new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())),
+  };
+}
+
 /** This calendar month on the phone, both ends inclusive, sent explicitly to the API (D-025). */
 export function currentMonth(now = new Date()): { from: IsoDate; to: IsoDate; label: string; name: string } {
   const first = new Date(now.getFullYear(), now.getMonth(), 1);

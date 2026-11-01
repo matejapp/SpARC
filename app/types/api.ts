@@ -61,6 +61,50 @@ export type TransactionResponse = {
   updatedAt: string;
 };
 
+/** A recurring bill (D-034). `monthly: false` is a one-off bill, due once on firstDueDate. */
+export type BillRequest = {
+  name: string;
+  amount: number;
+  currency: Currency;
+  categoryId: string;
+  firstDueDate: IsoDate;
+  monthly: boolean;
+};
+
+export type BillResponse = {
+  id: string;
+  name: string;
+  amount: number;
+  currency: Currency;
+  categoryId: string | null;
+  categoryName: string | null;
+  firstDueDate: IsoDate;
+  monthly: boolean;
+  /** The earliest unpaid due date; in the past when overdue, null when nothing is left to pay. */
+  nextDueDate: IsoDate | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** One month of a bill. Overdue is not a status: pending with a due date before today. */
+export type OccurrenceStatus = 'pending' | 'paid';
+
+export type OccurrenceResponse = {
+  id: string;
+  billId: string;
+  billName: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  dueDate: IsoDate;
+  status: OccurrenceStatus;
+  /** The month's own amount, fixed when it was generated. */
+  amount: number;
+  currency: Currency;
+  paidAt: string | null;
+  /** The expense the payment created; null while pending. */
+  transactionId: string | null;
+};
+
 export type PagedResponse<T> = {
   items: T[];
   page: number;
