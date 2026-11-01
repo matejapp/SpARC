@@ -44,10 +44,17 @@ public sealed class TransactionRepository(SparcDbContext db) : ITransactionRepos
 
     public Task SaveAsync() => db.SaveChangesAsync();
 
-    public async Task<bool> DeleteAsync(Guid userId, Guid id) =>
-        await db.Transactions
-            .Where(t => t.Id == id && t.UserId == userId)
-            .ExecuteDeleteAsync() > 0;
+    public Task<Transaction?> FindForDeleteAsync(Guid userId, Guid id) =>
+        db.Transactions
+            .Include(t => t.BillOccurrence)
+            .SingleOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+
+    // One SaveChanges is one DB transaction: the delete and the occurrence's revert land together.
+    public async Task DeleteAsync(Transaction transaction)
+    {
+        db.Transactions.Remove(transaction);
+        await db.SaveChangesAsync();
+    }
 
     // One GROUP BY: at most two rows come back, whatever the number of transactions. Totals are
     // AmountRsd, the frozen pivot value, never Amount (D-004).

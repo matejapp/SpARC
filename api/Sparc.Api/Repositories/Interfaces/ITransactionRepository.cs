@@ -24,8 +24,17 @@ public interface ITransactionRepository
 
     Task SaveAsync();
 
-    /// <summary>False when the transaction does not exist or belongs to another user.</summary>
-    Task<bool> DeleteAsync(Guid userId, Guid id);
+    /// <summary>
+    /// Tracked, with its bill occurrence (if any) loaded, for <see cref="DeleteAsync"/>. Null when
+    /// the transaction does not exist or belongs to another user.
+    /// </summary>
+    Task<Transaction?> FindForDeleteAsync(Guid userId, Guid id);
+
+    /// <summary>
+    /// Deletes the tracked transaction and saves any change made to its loaded occurrence, in one
+    /// SaveChanges.
+    /// </summary>
+    Task DeleteAsync(Transaction transaction);
 
     /// <summary>
     /// Sum of AmountRsd per type between two dates, inclusive, computed by the database.

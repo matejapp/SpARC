@@ -39,6 +39,11 @@ public sealed class GlobalExceptionHandler(
             DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } } =>
                 Problem(StatusCodes.Status409Conflict, "Conflict.", "The request conflicts with existing data."),
 
+            // A tracked update or delete found its row gone (e.g. two deletes at once): the other
+            // request won. Not a server fault.
+            DbUpdateConcurrencyException =>
+                Problem(StatusCodes.Status409Conflict, "Conflict.", "The record was changed or removed meanwhile."),
+
             BadHttpRequestException e => Problem(e.StatusCode, "Bad request.", null),
 
             _ => Problem(StatusCodes.Status500InternalServerError, "An unexpected error occurred.", null),

@@ -53,6 +53,13 @@ public sealed class TransactionService(
         var transaction = await transactions.FindForUpdateAsync(userId, id)
             ?? throw new NotFoundException("Transaction");
 
+        // A paid bill's expense stays an expense; its amount, date and text stay editable (D-035).
+        if (transaction.BillOccurrenceId is not null && request.Type != TransactionType.Expense)
+        {
+            throw new DomainValidationException(nameof(TransactionRequest.Type),
+                "A paid bill's expense can't be changed to income.");
+        }
+
         await ValidateAsync(userId, request);
         Apply(transaction, request);
 
@@ -60,14 +67,24 @@ public sealed class TransactionService(
         logger.LogInformation("Transaction updated {TransactionId} for {UserId}", id, userId);
     }
 
+    /// <summary>
+    /// Deleting a paid bill's expense is the user's undo of "mark paid": its month goes back to
+    /// pending in the same save, so a month is never paid without an expense behind it (D-035).
+    /// </summary>
     public async Task DeleteAsync(Guid userId, Guid id)
     {
-        if (!await transactions.DeleteAsync(userId, id))
+        var transaction = await transactions.FindForDeleteAsync(userId, id)
+            ?? throw new NotFoundException("Transaction");
+
+        if (transaction.BillOccurrence is { } occurrence)
         {
-            throw new NotFoundException("Transaction");
+            occurrence.Status = BillOccurrenceStatus.Pending;
+            occurrence.PaidAt = null;
         }
 
-        logger.LogInformation("Transaction deleted {TransactionId} for {UserId}", id, userId);
+        await transactions.DeleteAsync(transaction);
+        logger.LogInformation("Transaction deleted {TransactionId} for {UserId}, bill occurrence reverted: {Reverted}",
+            id, userId, transaction.BillOccurrence is not null);
     }
 
     /// <summary>The rules a DTO cannot check. Returns the category the transaction will point to.</summary>
@@ -110,7 +127,8 @@ public sealed class TransactionService(
         transaction.AmountRsd = transaction.Amount * transaction.RateToRsd;
     }
 
-    private static TransactionResponse ToResponse(Transaction transaction, Category? category) => new()
+    /// <summary>Shared with BillOccurrenceService, which answers a payment with its expense.</summary>
+    internal static TransactionResponse ToResponse(Transaction transaction, Category? category) => new()
     {
         Id = transaction.Id,
         Type = transaction.Type,
