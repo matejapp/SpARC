@@ -31,6 +31,16 @@ export function formatSigned(value: number, type: TransactionType, currency?: Cu
   return currency ? `${text} ${currency}` : text;
 }
 
+/**
+ * An exchange rate as the API stores it (up to 6 decimals; NBS publishes 4): 117.3931 →
+ * "117,3931". At least 4 decimals, trailing zeros past that dropped — display only, never parsed.
+ */
+export function formatRate(value: number): string {
+  const [whole, decimals] = value.toFixed(6).split('.');
+  const shown = decimals.replace(/0+$/, '').padEnd(4, '0');
+  return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${shown}`;
+}
+
 // The amount field. The API takes at most 2 decimals and refuses anything over
 // 9.999.999.999.999.999,99; the app caps at 13 integer digits, so every accepted value has at
 // most 15 significant digits. A JS number carries that exactly, and JSON.stringify writes back

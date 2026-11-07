@@ -4,31 +4,38 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { ApiError } from '@/api/client';
 import { DateField } from '@/components/DateField';
 import { FormScreen } from '@/components/FormScreen';
+import { CurrencyMenu } from '@/components/CurrencyMenu';
 import { PencilIcon } from '@/components/icons';
 import { ErrorBanner } from '@/components/ui/Banner';
 import { Button } from '@/components/ui/Button';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useCategories } from '@/hooks/useTransactions';
 import { todayIso } from '@/lib/dates';
-import { parseAmount } from '@/lib/money';
+import { formatAmount, formatRate, parseAmount } from '@/lib/money';
 import { makeStyles, radii, tabularNums, type, useTheme } from '@/lib/theme';
-import type { IsoDate, TransactionRequest, TransactionType } from '@/types/api';
+import type { Currency, IsoDate, TransactionRequest, TransactionType } from '@/types/api';
 
 export type TransactionDraft = {
   type: TransactionType;
   amountText: string;
+  currency: Currency;
   categoryId: string | null;
   occurredOn: IsoDate;
   description: string;
 };
 
+// A new entry starts in RSD, the pivot: the preferred currency is a display setting (D-004).
 export const emptyDraft = (type: TransactionType = 'expense'): TransactionDraft => ({
   type,
   amountText: '',
+  currency: 'RSD',
   categoryId: null,
   occurredOn: todayIso(),
   description: '',
 });
+
+/** What a saved transaction froze (D-038), so an edit can show it while its value is unchanged. */
+export type FrozenRate = { amountRsd: number; rateToRsd: number };
 
 const FORM_FIELDS = ['amount', 'categoryId', 'occurredOn', 'description'] as const;
 type Errors = Partial<Record<(typeof FORM_FIELDS)[number], string>>;
@@ -49,8 +56,10 @@ export function TransactionForm({
   error,
   topInset,
   after,
+  frozen,
 }: {
   initial: TransactionDraft;
+  frozen?: FrozenRate;
   header: (type: TransactionType) => ReactNode;
   submitLabel: (type: TransactionType) => string;
   onSubmit: (request: TransactionRequest) => void;
@@ -92,19 +101,32 @@ export function TransactionForm({
     onSubmit({
       type: draft.type,
       amount: amount.value,
-      currency: 'RSD', // the only currency the API accepts until multi-currency
+      currency: draft.currency, // never a rate: the API freezes the NBS rate itself (D-038)
       categoryId: draft.categoryId,
       occurredOn: draft.occurredOn,
       description: draft.description.trim() || null,
     });
   }
 
-  // An error that names none of this form's fields (a 404 category, the RSD-only rule, the
+  // An error that names none of this form's fields (a 404 category, rates unavailable (503), the
   // network) goes in the banner instead.
   const onAField =
     error instanceof ApiError && FORM_FIELDS.some((field) => error.fieldErrors[field]);
   const banner = error && !onAField ? error.message : null;
   const amountInk = draft.type === 'income' ? colors.income : colors.ink;
+
+  // A foreign amount says how it becomes RSD. The saved figures only while the value is the one
+  // they were frozen for; amount, currency or date changed means the API takes the rate again.
+  const valueUnchanged =
+    draft.amountText === initial.amountText &&
+    draft.currency === initial.currency &&
+    draft.occurredOn === initial.occurredOn;
+  const conversion =
+    draft.currency === 'RSD'
+      ? null
+      : frozen && valueUnchanged
+        ? `= ${formatAmount(frozen.amountRsd)} RSD · 1 ${draft.currency} = ${formatRate(frozen.rateToRsd)} RSD`
+        : `Converted to RSD at the NBS rate for this date.`;
 
   return (
     <FormScreen
@@ -141,19 +163,19 @@ export function TransactionForm({
             placeholderTextColor={colors.placeholder}
             keyboardAppearance={scheme}
             keyboardType="decimal-pad"
-            accessibilityLabel="Amount in RSD"
+            accessibilityLabel={`Amount in ${draft.currency}`}
             accessibilityHint={errors.amount}
             maxLength={20}
             style={[styles.amountInput, { color: amountInk }]}
           />
-          <View style={styles.currencyPill}>
-            <Text style={styles.currencyText}>RSD</Text>
-          </View>
+          <CurrencyMenu value={draft.currency} onChange={(currency) => set({ currency })} />
         </View>
         {errors.amount ? (
           <Text style={styles.error} accessibilityRole="alert">
             {errors.amount}
           </Text>
+        ) : conversion ? (
+          <Text style={styles.conversion}>{conversion}</Text>
         ) : null}
       </View>
 
@@ -236,15 +258,7 @@ const useStyles = makeStyles((t) => ({
     textAlign: 'right',
     padding: 0,
   },
-  currencyPill: {
-    height: 32,
-    paddingHorizontal: 12,
-    borderRadius: radii.pill,
-    backgroundColor: t.colors.surface,
-    boxShadow: t.shadows.outline,
-    justifyContent: 'center',
-  },
-  currencyText: { ...type.pill, color: t.colors.ink },
+  conversion: { ...type.caption, ...tabularNums, color: t.colors.ink2, marginTop: 8, textAlign: 'center' },
   section: { marginTop: 28, gap: 10 },
   sectionLabel: { ...type.label, color: t.colors.ink2 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

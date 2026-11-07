@@ -16,6 +16,7 @@ function toDraft(t: TransactionResponse): TransactionDraft {
   return {
     type: t.type,
     amountText: formatAmount(t.amount),
+    currency: t.currency,
     categoryId: t.categoryId,
     occurredOn: t.occurredOn,
     description: t.description ?? '',
@@ -81,6 +82,7 @@ export default function TransactionScreen() {
     <TransactionForm
       key={t.id}
       initial={toDraft(t)}
+      frozen={{ amountRsd: t.amountRsd, rateToRsd: t.rateToRsd }}
       header={(kind) => <ScreenHeader title={kind === 'income' ? 'Edit income' : 'Edit expense'} />}
       submitLabel={() => 'Save changes'}
       pending={update.isPending}
