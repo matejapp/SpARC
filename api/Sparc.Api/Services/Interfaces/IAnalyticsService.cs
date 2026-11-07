@@ -8,4 +8,7 @@ public interface IAnalyticsService
     Task<AnalyticsSummaryResponse> SummaryAsync(Guid userId, AnalyticsPeriodQuery query);
     Task<AnalyticsTrendResponse> TrendAsync(Guid userId, AnalyticsPeriodQuery query);
     Task<AnalyticsPaceResponse> PaceAsync(Guid userId, AnalyticsMonthQuery query);
+    Task<AnalyticsCategoriesResponse> CategoriesAsync(Guid userId, AnalyticsTypedPeriodQuery query);
+    Task<AnalyticsCategoryMonthsResponse> CategoryMonthsAsync(Guid userId, AnalyticsPeriodQuery query);
+    Task<AnalyticsDailyResponse> DailyAsync(Guid userId, AnalyticsMonthQuery query);
 }

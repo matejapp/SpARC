@@ -11,6 +11,12 @@ public sealed record MonthTotal(int Year, int Month, TransactionType Type, decim
 /// <summary>One type's total on one day.</summary>
 public sealed record DayTotal(DateOnly Date, TransactionType Type, decimal Total);
 
+/// <summary>One category's total and row count; a null id is the uncategorised bucket.</summary>
+public sealed record CategoryTotal(Guid? CategoryId, decimal Total, int Count);
+
+/// <summary>One category's total in one calendar month.</summary>
+public sealed record CategoryMonthTotal(int Year, int Month, Guid? CategoryId, decimal Total);
+
 /// <summary>
 /// Aggregates over one user's transactions in a display currency (D-041). Every method takes the
 /// user id and filters on it, and every amount is summed by Postgres: no row is loaded into C#.
@@ -37,4 +43,18 @@ public interface IAnalyticsRepository
     /// </summary>
     Task<List<DayTotal>> TotalsByDayAsync(
         Guid userId, DateOnly from, DateOnly to, string currency, TransactionType? type, int decimals);
+
+    /// <summary>Per category (null = uncategorised) of one type, rounded once each, with row counts.</summary>
+    Task<List<CategoryTotal>> CategoryTotalsAsync(
+        Guid userId, DateOnly from, DateOnly to, string currency, TransactionType type);
+
+    /// <summary>
+    /// Per month and category of one type, rounded to <paramref name="decimals"/> — more than 2
+    /// when the caller adds categories together into a bucket and rounds that once.
+    /// </summary>
+    Task<List<CategoryMonthTotal>> CategoryMonthTotalsAsync(
+        Guid userId, DateOnly from, DateOnly to, string currency, TransactionType type, int decimals);
+
+    /// <summary>Names of the given categories the user can see: their own and the system set.</summary>
+    Task<Dictionary<Guid, string>> CategoryNamesAsync(Guid userId, IReadOnlyCollection<Guid> ids);
 }

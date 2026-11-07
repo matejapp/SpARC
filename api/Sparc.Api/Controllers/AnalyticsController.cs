@@ -24,4 +24,19 @@ public sealed class AnalyticsController(IAnalyticsService analyticsService) : Ba
     [HttpGet("pace")]
     public async Task<ActionResult<AnalyticsPaceResponse>> Pace([FromQuery] AnalyticsMonthQuery query) =>
         await analyticsService.PaceAsync(CurrentUserId, query);
+
+    /// <summary>Totals and shares per category of one type (expense by default), largest first.</summary>
+    [HttpGet("categories")]
+    public async Task<ActionResult<AnalyticsCategoriesResponse>> Categories([FromQuery] AnalyticsTypedPeriodQuery query) =>
+        await analyticsService.CategoriesAsync(CurrentUserId, query);
+
+    /// <summary>Spending per month for the top categories plus Other, for stacked bars.</summary>
+    [HttpGet("categories/monthly")]
+    public async Task<ActionResult<AnalyticsCategoryMonthsResponse>> CategoryMonths([FromQuery] AnalyticsPeriodQuery query) =>
+        await analyticsService.CategoryMonthsAsync(CurrentUserId, query);
+
+    /// <summary>Expense and income per day of a month; every day present.</summary>
+    [HttpGet("daily")]
+    public async Task<ActionResult<AnalyticsDailyResponse>> Daily([FromQuery] AnalyticsMonthQuery query) =>
+        await analyticsService.DailyAsync(CurrentUserId, query);
 }

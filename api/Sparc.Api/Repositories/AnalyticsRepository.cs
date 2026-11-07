@@ -56,6 +56,30 @@ public sealed class AnalyticsRepository(SparcDbContext db) : IAnalyticsRepositor
             .ToListAsync();
     }
 
+    public Task<List<CategoryTotal>> CategoryTotalsAsync(
+        Guid userId, DateOnly from, DateOnly to, string currency, TransactionType type) =>
+        Converted(userId, from, to, currency)
+            .Where(x => x.Type == type)
+            .GroupBy(x => x.CategoryId)
+            .Select(g => new CategoryTotal(g.Key, Math.Round(g.Sum(x => x.Value), 2), g.Count()))
+            .ToListAsync();
+
+    public Task<List<CategoryMonthTotal>> CategoryMonthTotalsAsync(
+        Guid userId, DateOnly from, DateOnly to, string currency, TransactionType type, int decimals) =>
+        Converted(userId, from, to, currency)
+            .Where(x => x.Type == type)
+            .GroupBy(x => new { x.OccurredOn.Year, x.OccurredOn.Month, x.CategoryId })
+            .Select(g => new CategoryMonthTotal(
+                g.Key.Year, g.Key.Month, g.Key.CategoryId, Math.Round(g.Sum(x => x.Value), decimals)))
+            .ToListAsync();
+
+    // A transaction can only point at a category its owner can see (TransactionService), so every
+    // id here resolves; the explicit visibility check matches the query filter (D-026).
+    public Task<Dictionary<Guid, string>> CategoryNamesAsync(Guid userId, IReadOnlyCollection<Guid> ids) =>
+        db.Categories.AsNoTracking()
+            .Where(c => ids.Contains(c.Id) && (c.UserId == userId || c.UserId == null))
+            .ToDictionaryAsync(c => c.Id, c => c.Name);
+
     /// <summary>
     /// One user's rows in the period with their value in <paramref name="currency"/>. A LEFT join,
     /// so a missing rate could only ever show as a NULL value, never drop the row's other columns;

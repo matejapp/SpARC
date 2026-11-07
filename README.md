@@ -263,6 +263,9 @@ not built yet.
 | Analytics | `GET /api/v1/analytics/summary?from=&to=` | income, expense, net, savings rate, average daily spend; with the period before |
 | | `GET /api/v1/analytics/trend?from=&to=` | per month, empty months as zeros |
 | | `GET /api/v1/analytics/pace?month=yyyy-MM` | running expense by day, this month and the one before |
+| | `GET /api/v1/analytics/categories?from=&to=&type=` | per category: total, count, share (adds up to 1) |
+| | `GET /api/v1/analytics/categories/monthly?from=&to=` | top 5 categories + Other, per month |
+| | `GET /api/v1/analytics/daily?month=yyyy-MM` | expense and income for every day of the month |
 | Bills | `GET /api/v1/bills?page=&pageSize=`, `POST /api/v1/bills` | paged; a new bill gets 12 months scheduled |
 | | `GET`, `PUT`, `DELETE /api/v1/bills/{id}` | editing changes future unpaid months only |
 | Bill months | `GET /api/v1/occurrences?from=&to=&billId=` | calendar, or one bill's months |

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Sparc.Api.Common;
 using Sparc.Api.Dto;
 using Sparc.Api.Models;
 using Sparc.Api.Repositories.Interfaces;
@@ -19,6 +20,10 @@ public sealed class AnalyticsService(
     // A running total sums daily totals, so those are carried at this precision and the running
     // value is rounded once, per day shown (D-042).
     private const int RunningDecimals = 10;
+
+    // The stacked bars show this many categories; the rest are one Other layer, unless only one
+    // more would be left, which then gets its own layer instead of an Other of one (D-042).
+    private const int TopCategories = 5;
 
     public async Task<AnalyticsSummaryResponse> SummaryAsync(Guid userId, AnalyticsPeriodQuery query)
     {
@@ -98,6 +103,112 @@ public sealed class AnalyticsService(
             }).ToList(),
         };
     }
+
+    public async Task<AnalyticsCategoriesResponse> CategoriesAsync(Guid userId, AnalyticsTypedPeriodQuery query)
+    {
+        var (from, to) = AnalyticsPeriods.OrCurrentMonth(query.From, query.To);
+        var type = query.TypeOrExpense();
+        var currency = await displayCurrency.PrepareAsync(userId, from, to);
+
+        var totals = Ranked(await analytics.CategoryTotalsAsync(userId, from, to, currency, type));
+        var names = await analytics.CategoryNamesAsync(userId, Ids(totals));
+        var shares = Shares.LargestRemainder(totals.Select(t => t.Total).ToList());
+        var periodTotals = await analytics.TotalsByTypeAsync(userId, from, to, currency);
+
+        return new AnalyticsCategoriesResponse
+        {
+            From = from,
+            To = to,
+            Currency = currency,
+            Type = type,
+            Total = type == TransactionType.Income ? periodTotals.Income : periodTotals.Expense,
+            Categories = totals.Select((t, i) => new CategoryShare
+            {
+                CategoryId = t.CategoryId,
+                Name = t.CategoryId is { } id ? names.GetValueOrDefault(id) : null,
+                Total = t.Total,
+                Share = shares[i],
+                Count = t.Count,
+            }).ToList(),
+        };
+    }
+
+    public async Task<AnalyticsCategoryMonthsResponse> CategoryMonthsAsync(Guid userId, AnalyticsPeriodQuery query)
+    {
+        var (from, to) = AnalyticsPeriods.OrCurrentMonth(query.From, query.To);
+        var currency = await displayCurrency.PrepareAsync(userId, from, to);
+
+        var ranked = Ranked(await analytics.CategoryTotalsAsync(userId, from, to, currency, TransactionType.Expense));
+        var shown = ranked.Count <= TopCategories + 1 ? ranked : ranked.Take(TopCategories).ToList();
+        var shownIds = shown.Select(t => t.CategoryId).ToHashSet();
+        var hasOther = shown.Count < ranked.Count;
+        var names = await analytics.CategoryNamesAsync(userId, Ids(shown));
+
+        var series = shown.Select(t => new CategorySeries
+        {
+            CategoryId = t.CategoryId,
+            Name = t.CategoryId is { } id ? names.GetValueOrDefault(id) : null,
+            IsOther = false,
+        }).ToList();
+        if (hasOther)
+        {
+            series.Add(new CategorySeries { CategoryId = null, Name = null, IsOther = true });
+        }
+
+        // Per (month, category) at RunningDecimals; a layer adds its categories and rounds once.
+        var monthly = await analytics.CategoryMonthTotalsAsync(
+            userId, from, to, currency, TransactionType.Expense, RunningDecimals);
+
+        return new AnalyticsCategoryMonthsResponse
+        {
+            From = from,
+            To = to,
+            Currency = currency,
+            Series = series,
+            Months = AnalyticsPeriods.Months(from, to).Select(m =>
+            {
+                var inMonth = monthly.Where(t => t.Year == m.Year && t.Month == m.Month).ToList();
+                return new CategoryMonth
+                {
+                    Month = MonthKey(m),
+                    Amounts = series.Select(s => Math.Round(
+                        inMonth.Where(t => s.IsOther ? !shownIds.Contains(t.CategoryId) : t.CategoryId == s.CategoryId)
+                            .Sum(t => t.Total),
+                        2, MidpointRounding.AwayFromZero)).ToList(),
+                };
+            }).ToList(),
+        };
+    }
+
+    public async Task<AnalyticsDailyResponse> DailyAsync(Guid userId, AnalyticsMonthQuery query)
+    {
+        var month = query.FirstDay() ?? AnalyticsPeriods.FirstOfMonth(AnalyticsPeriods.Today());
+        var monthEnd = AnalyticsPeriods.LastOfMonth(month);
+        var currency = await displayCurrency.PrepareAsync(userId, month, monthEnd);
+        var totals = await analytics.TotalsByDayAsync(userId, month, monthEnd, currency, type: null, decimals: 2);
+
+        decimal Total(DateOnly day, TransactionType type) =>
+            totals.SingleOrDefault(t => t.Date == day && t.Type == type)?.Total ?? 0m;
+
+        return new AnalyticsDailyResponse
+        {
+            Month = MonthKey(month),
+            Currency = currency,
+            Days = Enumerable.Range(0, monthEnd.Day).Select(i => month.AddDays(i)).Select(day => new DailyTotal
+            {
+                Date = day,
+                Expense = Total(day, TransactionType.Expense),
+                Income = Total(day, TransactionType.Income),
+            }).ToList(),
+        };
+    }
+
+    // Largest first; equal totals in a fixed order, so the answer doesn't shuffle between calls.
+    private static List<CategoryTotal> Ranked(IEnumerable<CategoryTotal> totals) =>
+        totals.OrderByDescending(t => t.Total).ThenBy(t => t.CategoryId?.ToString() ?? string.Empty).ToList();
+
+    private static List<Guid> Ids(IEnumerable<CategoryTotal> totals) =>
+        totals.Where(t => t.CategoryId.HasValue).Select(t => t.CategoryId!.Value).ToList();
 
     private static PeriodFigures Figures(DateOnly from, DateOnly to, TypeTotals totals, DateOnly today)
     {
