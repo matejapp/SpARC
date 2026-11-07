@@ -101,6 +101,7 @@ builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
 builder.Services.AddScoped<IDisplayCurrencyService, DisplayCurrencyService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IRecurringBillRepository, RecurringBillRepository>();
 builder.Services.AddScoped<IRecurringBillService, RecurringBillService>();
 builder.Services.AddScoped<IBillOccurrenceRepository, BillOccurrenceRepository>();

@@ -36,6 +36,26 @@ public sealed class AnalyticsRepository(SparcDbContext db) : IAnalyticsRepositor
         return new TypeTotals(TotalOf(TransactionType.Income), TotalOf(TransactionType.Expense));
     }
 
+    public Task<List<MonthTotal>> TotalsByMonthAsync(Guid userId, DateOnly from, DateOnly to, string currency) =>
+        Converted(userId, from, to, currency)
+            .GroupBy(x => new { x.OccurredOn.Year, x.OccurredOn.Month, x.Type })
+            .Select(g => new MonthTotal(g.Key.Year, g.Key.Month, g.Key.Type, Math.Round(g.Sum(x => x.Value), 2)))
+            .ToListAsync();
+
+    public Task<List<DayTotal>> TotalsByDayAsync(
+        Guid userId, DateOnly from, DateOnly to, string currency, TransactionType? type, int decimals)
+    {
+        var rows = Converted(userId, from, to, currency);
+        if (type is { } only)
+        {
+            rows = rows.Where(x => x.Type == only);
+        }
+        return rows
+            .GroupBy(x => new { x.OccurredOn, x.Type })
+            .Select(g => new DayTotal(g.Key.OccurredOn, g.Key.Type, Math.Round(g.Sum(x => x.Value), decimals)))
+            .ToListAsync();
+    }
+
     /// <summary>
     /// One user's rows in the period with their value in <paramref name="currency"/>. A LEFT join,
     /// so a missing rate could only ever show as a NULL value, never drop the row's other columns;

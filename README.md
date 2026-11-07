@@ -260,7 +260,9 @@ not built yet.
 | | `POST /api/v1/transactions` | |
 | | `GET`, `PUT`, `DELETE /api/v1/transactions/{id}` | |
 | Dashboard | `GET /api/v1/dashboard/summary?from=&to=` | income, expense, difference, in the preferred currency |
-| | `GET /api/v1/dashboard/trend`, `GET /api/v1/dashboard/by-category` | iteration 3 |
+| Analytics | `GET /api/v1/analytics/summary?from=&to=` | income, expense, net, savings rate, average daily spend; with the period before |
+| | `GET /api/v1/analytics/trend?from=&to=` | per month, empty months as zeros |
+| | `GET /api/v1/analytics/pace?month=yyyy-MM` | running expense by day, this month and the one before |
 | Bills | `GET /api/v1/bills?page=&pageSize=`, `POST /api/v1/bills` | paged; a new bill gets 12 months scheduled |
 | | `GET`, `PUT`, `DELETE /api/v1/bills/{id}` | editing changes future unpaid months only |
 | Bill months | `GET /api/v1/occurrences?from=&to=&billId=` | calendar, or one bill's months |
