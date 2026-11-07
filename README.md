@@ -256,7 +256,7 @@ not built yet.
 | Account | `GET /api/v1/users/me` | |
 | | `PUT /api/v1/users/me` | preferred currency; iteration 3 |
 | Categories | `GET /api/v1/categories?kind=`, `POST /api/v1/categories`, `DELETE /api/v1/categories/{id}` | system set + own; delete own only |
-| Transactions | `GET /api/v1/transactions?page=&pageSize=` | paged, newest first; filters arrive in iteration 3 |
+| Transactions | `GET /api/v1/transactions?type=&from=&to=&categoryId=&uncategorised=&currency=&page=&pageSize=` | paged, newest first; every filter optional, combined with AND |
 | | `POST /api/v1/transactions` | |
 | | `GET`, `PUT`, `DELETE /api/v1/transactions/{id}` | |
 | Dashboard | `GET /api/v1/dashboard/summary?from=&to=` | income, expense, difference |

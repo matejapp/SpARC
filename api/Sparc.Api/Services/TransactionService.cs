@@ -18,7 +18,19 @@ public sealed class TransactionService(
 {
     public async Task<PagedResponse<TransactionResponse>> ListAsync(Guid userId, TransactionListQuery query)
     {
-        var (items, totalCount) = await transactions.ListAsync(userId, query.Page, query.PageSize);
+        var filter = new TransactionFilter(
+            Type: query.Type switch
+            {
+                "income" => TransactionType.Income,
+                "expense" => TransactionType.Expense,
+                _ => null,
+            },
+            From: query.From,
+            To: query.To,
+            CategoryId: query.CategoryId,
+            Uncategorised: query.Uncategorised,
+            Currency: query.Currency?.ToUpperInvariant());
+        var (items, totalCount) = await transactions.ListAsync(userId, filter, query.Page, query.PageSize);
 
         return new PagedResponse<TransactionResponse>
         {

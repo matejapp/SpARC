@@ -7,9 +7,34 @@ namespace Sparc.Api.Repositories;
 
 public sealed class TransactionRepository(SparcDbContext db) : ITransactionRepository
 {
-    public async Task<(List<Transaction> Items, int TotalCount)> ListAsync(Guid userId, int page, int pageSize)
+    public async Task<(List<Transaction> Items, int TotalCount)> ListAsync(
+        Guid userId, TransactionFilter filter, int page, int pageSize)
     {
+        // The user first, always; each filter only narrows it. A category id is matched together
+        // with the user, so another user's category matches nothing instead of revealing itself.
+        // (UserId, OccurredOn DESC) serves a date range, (UserId, CategoryId) a category; type and
+        // currency are checked on rows already narrowed to one user.
         var mine = db.Transactions.AsNoTracking().Where(t => t.UserId == userId);
+        if (filter.Type is { } type)
+        {
+            mine = mine.Where(t => t.Type == type);
+        }
+        if (filter.From is { } from && filter.To is { } to)
+        {
+            mine = mine.Where(t => t.OccurredOn >= from && t.OccurredOn <= to);
+        }
+        if (filter.CategoryId is { } categoryId)
+        {
+            mine = mine.Where(t => t.CategoryId == categoryId);
+        }
+        else if (filter.Uncategorised)
+        {
+            mine = mine.Where(t => t.CategoryId == null);
+        }
+        if (filter.Currency is { } currency)
+        {
+            mine = mine.Where(t => t.Currency == currency);
+        }
 
         var totalCount = await mine.CountAsync();
 

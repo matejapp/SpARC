@@ -2,11 +2,26 @@ using Sparc.Api.Models;
 
 namespace Sparc.Api.Repositories.Interfaces;
 
+/// <summary>
+/// The list filters, already validated. Null means "any". <see cref="Uncategorised"/> and
+/// <see cref="CategoryId"/> are never both set (the query DTO refuses it).
+/// </summary>
+public sealed record TransactionFilter(
+    TransactionType? Type = null,
+    DateOnly? From = null,
+    DateOnly? To = null,
+    Guid? CategoryId = null,
+    bool Uncategorised = false,
+    string? Currency = null);
+
 /// <summary>Every method takes the user id and filters on it; there is no unscoped read.</summary>
 public interface ITransactionRepository
 {
-    /// <summary>Newest first, with Category loaded. Also returns the user's total row count.</summary>
-    Task<(List<Transaction> Items, int TotalCount)> ListAsync(Guid userId, int page, int pageSize);
+    /// <summary>
+    /// Newest first, with Category loaded, narrowed by <paramref name="filter"/>. Also returns how
+    /// many of the user's rows match it.
+    /// </summary>
+    Task<(List<Transaction> Items, int TotalCount)> ListAsync(Guid userId, TransactionFilter filter, int page, int pageSize);
 
     /// <summary>
     /// Read-only, with Category loaded. Null when the transaction does not exist or belongs to
