@@ -104,6 +104,22 @@ builder.Services.AddScoped<IRecurringBillService, RecurringBillService>();
 builder.Services.AddScoped<IBillOccurrenceRepository, BillOccurrenceRepository>();
 builder.Services.AddScoped<IBillOccurrenceService, BillOccurrenceService>();
 
+// NBS exchange rates (Sprint 3). Provider settings are in appsettings.json; nothing secret.
+var fxOptions = builder.Configuration.GetSection(FxRateOptions.Section).Get<FxRateOptions>() ?? new FxRateOptions();
+if (!EF.IsDesignTime)
+{
+    fxOptions.Validate();
+}
+builder.Services.AddSingleton(fxOptions);
+builder.Services.AddHttpClient<IFxRateProvider, KursResenjeRateProvider>(client =>
+{
+    client.BaseAddress = new Uri(fxOptions.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(fxOptions.TimeoutSeconds);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("SpARC-API/1.0");
+});
+builder.Services.AddScoped<IFxRateRepository, FxRateRepository>();
+builder.Services.AddScoped<IFxRateService, FxRateService>();
+
 // Errors: exceptions → GlobalExceptionHandler; empty error responses (401, unknown route) →
 // status code pages. Both write ProblemDetails, with a traceId to find the server-side log.
 builder.Services.AddProblemDetails();
@@ -119,6 +135,15 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+// Operator command, not a server: `dotnet run --project api/Sparc.Api -- fx-backfill` gives every
+// existing transaction date its EUR and USD rates, then exits. Safe to re-run.
+if (args.Contains("fx-backfill"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var result = await scope.ServiceProvider.GetRequiredService<IFxRateService>().BackfillAsync();
+    return result.Completed ? 0 : 1;
+}
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
@@ -133,3 +158,4 @@ app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();
+return 0;

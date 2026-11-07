@@ -3,7 +3,8 @@ namespace Sparc.Api.Common;
 // Services throw these; GlobalExceptionHandler turns them into ProblemDetails.
 // Messages reach the client, so they must never contain EF, SQL or stack detail.
 
-public abstract class AppException(string message) : Exception(message);
+public abstract class AppException(string message, Exception? innerException = null)
+    : Exception(message, innerException);
 
 /// <summary>
 /// 404. Also used when the record exists but belongs to another user — a 403 would confirm
@@ -16,6 +17,13 @@ public sealed class NotFoundException(string resource) : AppException($"{resourc
 /// revoked. One message per endpoint, whatever the cause, so the response reveals nothing.
 /// </summary>
 public sealed class AuthenticationFailedException(string message) : AppException(message);
+
+/// <summary>
+/// 503. A dependency the request needs is down (the NBS rate provider). The message is generic;
+/// the inner exception carries what went wrong, for the log only.
+/// </summary>
+public sealed class ServiceUnavailableException(string message, Exception innerException)
+    : AppException(message, innerException);
 
 /// <summary>409. Duplicate data, or a state change that is no longer allowed (e.g. already paid).</summary>
 public sealed class ConflictException(string message) : AppException(message);

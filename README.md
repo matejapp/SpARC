@@ -231,7 +231,7 @@ as the one rule that cannot break.
 | `Transactions` | Amount + currency as entered, rate to RSD and RSD value frozen at entry, date, category, optional link to the bill month it paid (unique) |
 | `RecurringBills` | A bill's current name, amount, currency, category, first due date and interval |
 | `BillOccurrences` | One row per bill per month, with its own status and the amount at due — so editing a bill never rewrites the past |
-| `FxRates` | One rate per currency per day (iteration 3) |
+| `FxRates` | The NBS middle rate of EUR and USD per date — provisional until final, then never changed |
 | `RefreshTokens` | Hashed refresh tokens with expiry and rotation chain |
 
 All timestamps are stored in UTC (`timestamptz`); calendar dates such as a transaction's day

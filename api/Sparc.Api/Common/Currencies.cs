@@ -15,6 +15,12 @@ public static class Currencies
     /// </summary>
     public static readonly string SqlList = string.Join(", ", All.Select(c => $"'{c}'"));
 
+    /// <summary>The currencies that have NBS rates in FxRates. RSD is the pivot, its rate is always 1.</summary>
+    public static readonly IReadOnlyList<string> Foreign = [Eur, Usd];
+
+    /// <summary><c>'EUR', 'USD'</c>, for the FxRates currency CHECK.</summary>
+    public static readonly string ForeignSqlList = string.Join(", ", Foreign.Select(c => $"'{c}'"));
+
     /// <summary>Case-insensitive; callers store <c>code.ToUpperInvariant()</c>.</summary>
     public static bool IsSupported(string code) => All.Contains(code, StringComparer.OrdinalIgnoreCase);
 }

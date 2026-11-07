@@ -15,6 +15,9 @@ public class SparcDbContext(DbContextOptions<SparcDbContext> options, ICurrentUs
     public DbSet<RecurringBill> RecurringBills => Set<RecurringBill>();
     public DbSet<BillOccurrence> BillOccurrences => Set<BillOccurrence>();
 
+    // Shared reference data, not user-owned: no query filter and no EnforceOwnership case.
+    public DbSet<FxRate> FxRates => Set<FxRate>();
+
     // Read by the query filters on every query; EF sends it as a parameter.
     private Guid? CurrentUserId => currentUser.Id;
 
@@ -31,7 +34,7 @@ public class SparcDbContext(DbContextOptions<SparcDbContext> options, ICurrentUs
         // UserId filter. No user (anonymous request, design time) sees no transactions and only
         // the system categories. Every new user-owned entity gets a filter here and a case in
         // EnforceOwnership. RefreshTokens are deliberately unfiltered: anonymous refresh finds a
-        // token by its hash, and the token is the credential (D-021).
+        // token by its hash, and the token is the credential (D-021). FxRates have no owner at all.
         modelBuilder.Entity<Transaction>().HasQueryFilter(t => t.UserId == CurrentUserId);
         modelBuilder.Entity<Category>().HasQueryFilter(c => c.UserId == CurrentUserId || c.UserId == null);
         modelBuilder.Entity<RecurringBill>().HasQueryFilter(b => b.UserId == CurrentUserId);

@@ -405,6 +405,39 @@ namespace Sparc.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Sparc.Api.Models.FxRate", b =>
+                {
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Currency")
+                        .HasColumnType("character(3)");
+
+                    b.Property<DateTime>("FetchedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsFinal")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly>("ListDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("RateToRsd")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.HasKey("Date", "Currency");
+
+                    b.ToTable("FxRates", t =>
+                        {
+                            t.HasCheckConstraint("CK_FxRates_Currency", "\"Currency\" IN ('EUR', 'USD')");
+
+                            t.HasCheckConstraint("CK_FxRates_ListDate_NotAfterDate", "\"ListDate\" <= \"Date\"");
+
+                            t.HasCheckConstraint("CK_FxRates_RateToRsd_Positive", "\"RateToRsd\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("Sparc.Api.Models.RecurringBill", b =>
                 {
                     b.Property<Guid>("Id")
