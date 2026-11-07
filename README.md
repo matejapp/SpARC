@@ -266,6 +266,8 @@ not built yet.
 | | `GET /api/v1/analytics/categories?from=&to=&type=` | per category: total, count, share (adds up to 1) |
 | | `GET /api/v1/analytics/categories/monthly?from=&to=` | top 5 categories + Other, per month |
 | | `GET /api/v1/analytics/daily?month=yyyy-MM` | expense and income for every day of the month |
+| | `GET /api/v1/analytics/bills?from=&to=` | bills paid, still unpaid (per currency, estimated in the preferred one), recurring share |
+| | `GET /api/v1/analytics/currencies?from=&to=&type=` | per entry currency: count, sum as entered, converted total, share |
 | Bills | `GET /api/v1/bills?page=&pageSize=`, `POST /api/v1/bills` | paged; a new bill gets 12 months scheduled |
 | | `GET`, `PUT`, `DELETE /api/v1/bills/{id}` | editing changes future unpaid months only |
 | Bill months | `GET /api/v1/occurrences?from=&to=&billId=` | calendar, or one bill's months |

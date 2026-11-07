@@ -11,4 +11,6 @@ public interface IAnalyticsService
     Task<AnalyticsCategoriesResponse> CategoriesAsync(Guid userId, AnalyticsTypedPeriodQuery query);
     Task<AnalyticsCategoryMonthsResponse> CategoryMonthsAsync(Guid userId, AnalyticsPeriodQuery query);
     Task<AnalyticsDailyResponse> DailyAsync(Guid userId, AnalyticsMonthQuery query);
+    Task<AnalyticsBillsResponse> BillsAsync(Guid userId, AnalyticsPeriodQuery query);
+    Task<AnalyticsCurrenciesResponse> CurrenciesAsync(Guid userId, AnalyticsTypedPeriodQuery query);
 }

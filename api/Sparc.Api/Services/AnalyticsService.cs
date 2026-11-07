@@ -15,7 +15,8 @@ namespace Sparc.Api.Services;
 /// </summary>
 public sealed class AnalyticsService(
     IAnalyticsRepository analytics,
-    IDisplayCurrencyService displayCurrency) : IAnalyticsService
+    IDisplayCurrencyService displayCurrency,
+    IFxRateService fxRates) : IAnalyticsService
 {
     // A running total sums daily totals, so those are carried at this precision and the running
     // value is rounded once, per day shown (D-042).
@@ -201,6 +202,81 @@ public sealed class AnalyticsService(
                 Income = Total(day, TransactionType.Income),
             }).ToList(),
         };
+    }
+
+    public async Task<AnalyticsBillsResponse> BillsAsync(Guid userId, AnalyticsPeriodQuery query)
+    {
+        var (from, to) = AnalyticsPeriods.OrCurrentMonth(query.From, query.To);
+        var currency = await displayCurrency.PrepareAsync(userId, from, to);
+
+        var paid = await analytics.PaidBillsAsync(userId, from, to, currency);
+        var expense = (await analytics.TotalsByTypeAsync(userId, from, to, currency)).Expense;
+        var unpaid = (await analytics.UnpaidBillsAsync(userId, from, to))
+            .OrderByDescending(u => u.Count).ThenBy(u => u.Currency, StringComparer.Ordinal).ToList();
+
+        return new AnalyticsBillsResponse
+        {
+            From = from,
+            To = to,
+            Currency = currency,
+            Paid = new PaidBills { Count = paid.Count, Total = paid.Total },
+            Unpaid = new UnpaidBills
+            {
+                Count = unpaid.Sum(u => u.Count),
+                ByCurrency = unpaid.Select(u => new CurrencyAmount { Currency = u.Currency, Count = u.Count, Amount = u.Amount }).ToList(),
+                EstimatedTotal = await EstimateAsync(unpaid, currency),
+                IsEstimate = unpaid.Any(u => u.Currency != currency),
+            },
+            Expense = expense,
+            RecurringShare = expense == 0 ? null : Math.Round(paid.Total / expense, 4, MidpointRounding.AwayFromZero),
+        };
+    }
+
+    public async Task<AnalyticsCurrenciesResponse> CurrenciesAsync(Guid userId, AnalyticsTypedPeriodQuery query)
+    {
+        var (from, to) = AnalyticsPeriods.OrCurrentMonth(query.From, query.To);
+        var type = query.TypeOrExpense();
+        var currency = await displayCurrency.PrepareAsync(userId, from, to);
+
+        var totals = (await analytics.EntryCurrencyTotalsAsync(userId, from, to, currency, type))
+            .OrderByDescending(t => t.Total).ThenBy(t => t.Currency, StringComparer.Ordinal).ToList();
+        var shares = Shares.LargestRemainder(totals.Select(t => t.Total).ToList());
+
+        return new AnalyticsCurrenciesResponse
+        {
+            From = from,
+            To = to,
+            Currency = currency,
+            Type = type,
+            Currencies = totals.Select((t, i) => new CurrencyShare
+            {
+                EntryCurrency = t.Currency,
+                Count = t.Count,
+                Amount = t.Amount,
+                Total = t.Total,
+                Share = shares[i],
+            }).ToList(),
+        };
+    }
+
+    /// <summary>
+    /// The unpaid sums in <paramref name="currency"/> at today's rates, rounded once. A sum already
+    /// in the display currency is taken as it is; the rest go through RSD: amount × its rate ÷ the
+    /// display currency's rate. Rates are fetched only when some sum needs one.
+    /// </summary>
+    private async Task<decimal> EstimateAsync(IReadOnlyList<UnpaidInCurrency> unpaid, string currency)
+    {
+        var foreign = unpaid.Where(u => u.Currency != currency).ToList();
+        var total = unpaid.Where(u => u.Currency == currency).Sum(u => u.Amount);
+        if (foreign.Count > 0)
+        {
+            var displayRate = await fxRates.TodayRateToRsdAsync(currency);
+            foreach (var u in foreign)
+            {
+                total += u.Amount * await fxRates.TodayRateToRsdAsync(u.Currency) / displayRate;
+            }
+        }
+        return Math.Round(total, 2, MidpointRounding.AwayFromZero);
     }
 
     // Largest first; equal totals in a fixed order, so the answer doesn't shuffle between calls.

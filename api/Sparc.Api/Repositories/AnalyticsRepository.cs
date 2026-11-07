@@ -73,6 +73,33 @@ public sealed class AnalyticsRepository(SparcDbContext db) : IAnalyticsRepositor
                 g.Key.Year, g.Key.Month, g.Key.CategoryId, Math.Round(g.Sum(x => x.Value), decimals)))
             .ToListAsync();
 
+    public async Task<CountTotal> PaidBillsAsync(Guid userId, DateOnly from, DateOnly to, string currency)
+    {
+        var paid = await Converted(userId, from, to, currency)
+            .Where(x => x.Type == TransactionType.Expense && x.BillOccurrenceId != null)
+            .GroupBy(x => 1)
+            .Select(g => new CountTotal(g.Count(), Math.Round(g.Sum(x => x.Value), 2)))
+            .SingleOrDefaultAsync();
+        return paid ?? new CountTotal(0, 0m);
+    }
+
+    public Task<List<UnpaidInCurrency>> UnpaidBillsAsync(Guid userId, DateOnly from, DateOnly to) =>
+        db.BillOccurrences.AsNoTracking()
+            .Where(o => o.UserId == userId && o.Status == BillOccurrenceStatus.Pending
+                && o.DueDate >= from && o.DueDate <= to && o.RecurringBill.IsActive)
+            .GroupBy(o => o.CurrencyAtDue)
+            .Select(g => new UnpaidInCurrency(g.Key, g.Count(), g.Sum(o => o.AmountAtDue)))
+            .ToListAsync();
+
+    public Task<List<EntryCurrencyTotal>> EntryCurrencyTotalsAsync(
+        Guid userId, DateOnly from, DateOnly to, string currency, TransactionType type) =>
+        Converted(userId, from, to, currency)
+            .Where(x => x.Type == type)
+            .GroupBy(x => x.Currency)
+            .Select(g => new EntryCurrencyTotal(
+                g.Key, g.Count(), g.Sum(x => x.Amount), Math.Round(g.Sum(x => x.Value), 2)))
+            .ToListAsync();
+
     // A transaction can only point at a category its owner can see (TransactionService), so every
     // id here resolves; the explicit visibility check matches the query filter (D-026).
     public Task<Dictionary<Guid, string>> CategoryNamesAsync(Guid userId, IReadOnlyCollection<Guid> ids) =>

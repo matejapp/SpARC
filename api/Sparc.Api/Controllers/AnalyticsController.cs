@@ -39,4 +39,14 @@ public sealed class AnalyticsController(IAnalyticsService analyticsService) : Ba
     [HttpGet("daily")]
     public async Task<ActionResult<AnalyticsDailyResponse>> Daily([FromQuery] AnalyticsMonthQuery query) =>
         await analyticsService.DailyAsync(CurrentUserId, query);
+
+    /// <summary>Bills paid in the period, bills still unpaid, and the share of spending that is recurring.</summary>
+    [HttpGet("bills")]
+    public async Task<ActionResult<AnalyticsBillsResponse>> Bills([FromQuery] AnalyticsPeriodQuery query) =>
+        await analyticsService.BillsAsync(CurrentUserId, query);
+
+    /// <summary>Count, sum as entered, converted total and share per entry currency, of one type.</summary>
+    [HttpGet("currencies")]
+    public async Task<ActionResult<AnalyticsCurrenciesResponse>> Currencies([FromQuery] AnalyticsTypedPeriodQuery query) =>
+        await analyticsService.CurrenciesAsync(CurrentUserId, query);
 }

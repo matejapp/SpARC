@@ -17,6 +17,15 @@ public sealed record CategoryTotal(Guid? CategoryId, decimal Total, int Count);
 /// <summary>One category's total in one calendar month.</summary>
 public sealed record CategoryMonthTotal(int Year, int Month, Guid? CategoryId, decimal Total);
 
+/// <summary>A row count and its total in the display currency.</summary>
+public sealed record CountTotal(int Count, decimal Total);
+
+/// <summary>Unpaid bill months in one currency: how many, and the exact sum in that currency.</summary>
+public sealed record UnpaidInCurrency(string Currency, int Count, decimal Amount);
+
+/// <summary>Rows entered in one currency: count, exact sum as entered, and total in the display currency.</summary>
+public sealed record EntryCurrencyTotal(string Currency, int Count, decimal Amount, decimal Total);
+
 /// <summary>
 /// Aggregates over one user's transactions in a display currency (D-041). Every method takes the
 /// user id and filters on it, and every amount is summed by Postgres: no row is loaded into C#.
@@ -54,6 +63,19 @@ public interface IAnalyticsRepository
     /// </summary>
     Task<List<CategoryMonthTotal>> CategoryMonthTotalsAsync(
         Guid userId, DateOnly from, DateOnly to, string currency, TransactionType type, int decimals);
+
+    /// <summary>Expenses that came from paying a bill (BillOccurrenceId set), by expense date.</summary>
+    Task<CountTotal> PaidBillsAsync(Guid userId, DateOnly from, DateOnly to, string currency);
+
+    /// <summary>
+    /// Unpaid occurrences of active bills due in the period, per currency at due. Plain sums of
+    /// AmountAtDue, not converted: they have no rate until paid (D-039).
+    /// </summary>
+    Task<List<UnpaidInCurrency>> UnpaidBillsAsync(Guid userId, DateOnly from, DateOnly to);
+
+    /// <summary>Per entry currency, rows of one type: count, exact sum as entered, converted total.</summary>
+    Task<List<EntryCurrencyTotal>> EntryCurrencyTotalsAsync(
+        Guid userId, DateOnly from, DateOnly to, string currency, TransactionType type);
 
     /// <summary>Names of the given categories the user can see: their own and the system set.</summary>
     Task<Dictionary<Guid, string>> CategoryNamesAsync(Guid userId, IReadOnlyCollection<Guid> ids);
