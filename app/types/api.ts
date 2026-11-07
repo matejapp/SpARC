@@ -21,6 +21,11 @@ export type UserResponse = {
   preferredCurrency: Currency;
 };
 
+/** PUT /users/me — the display currency, the one setting stored on the account (D-043). */
+export type UpdateUserRequest = {
+  preferredCurrency: Currency;
+};
+
 export type RegisterRequest = {
   username: string;
   email: string;

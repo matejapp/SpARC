@@ -6,24 +6,41 @@ import { signOut } from '@/api/auth';
 import { ApiError } from '@/api/client';
 import { BrandArc } from '@/components/BrandArc';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { ErrorBanner } from '@/components/ui/Banner';
 import { Button } from '@/components/ui/Button';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { useMe } from '@/hooks/useMe';
+import { useMe, useUpdateMe } from '@/hooks/useMe';
+import type { Currency } from '@/types/api';
 import { clearSession } from '@/lib/session';
 import { makeStyles, radii, setThemeMode, spacing, type, useThemeMode } from '@/lib/theme';
 
-// Profile and settings, opened from the avatar on the dashboard. Sprint 1 holds the account,
-// the theme and logout; the period and currency settings arrive with their own cards.
+// Profile and settings, opened from the avatar on the dashboard and the currency chip on
+// Analytics: the account, the theme, the display currency and logout.
 const THEME_OPTIONS = [
   { value: 'dark', label: 'Dark' },
   { value: 'light', label: 'Light' },
 ] as const;
+
+const CURRENCY_OPTIONS = [
+  { value: 'RSD', label: 'RSD' },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'USD', label: 'USD' },
+] as const satisfies readonly { value: Currency; label: string }[];
+
+function saveErrorMessage(e: Error): string {
+  if (e instanceof ApiError && e.status === 0) return "Couldn't reach the server, so the currency wasn't changed.";
+  return e.message || "The currency wasn't changed. Try again.";
+}
 
 export default function SettingsScreen() {
   const styles = useStyles();
   const insets = useSafeAreaInsets();
   const me = useMe();
   const themeMode = useThemeMode();
+  const updateMe = useUpdateMe();
+  const currencyShown = updateMe.isPending
+    ? updateMe.variables.preferredCurrency
+    : (me.data?.preferredCurrency ?? 'RSD');
 
   const logout = useMutation({
     mutationFn: signOut,
@@ -97,12 +114,34 @@ export default function SettingsScreen() {
         />
       </View>
 
-      <View style={styles.card}>
+      {/* The display currency is account data, saved on the server (D-043). While a save is in
+          flight the control shows the chosen value; a failure snaps it back and says why. */}
+      <View style={[styles.card, styles.cardRoomy]}>
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>Currency</Text>
-          <Text style={styles.rowValue}>RSD</Text>
+          <Text style={styles.rowLabel}>Display currency</Text>
+          {updateMe.isPending ? <Text style={styles.note}>Saving…</Text> : null}
         </View>
-        <Text style={styles.note}>EUR and USD arrive with multi-currency.</Text>
+        {me.data ? (
+          <>
+            <SegmentedControl
+              label="Display currency"
+              options={CURRENCY_OPTIONS}
+              value={updateMe.isPending ? updateMe.variables.preferredCurrency : me.data.preferredCurrency}
+              onChange={(preferredCurrency) => {
+                // One save at a time, so two quick taps can't land on the server out of order.
+                if (updateMe.isPending || preferredCurrency === me.data.preferredCurrency) return;
+                updateMe.mutate({ preferredCurrency });
+              }}
+            />
+            {updateMe.isError ? <ErrorBanner message={saveErrorMessage(updateMe.error)} /> : null}
+            <Text style={styles.note}>
+              Totals and charts show in {currencyShown}. Each amount converts at the NBS rate of its own
+              date. Your entries keep the currency you typed them in.
+            </Text>
+          </>
+        ) : (
+          <View accessibilityLabel="Loading your settings" style={[styles.skeleton, styles.segmentSkeleton]} />
+        )}
       </View>
 
       <Button
@@ -147,6 +186,6 @@ const useStyles = makeStyles((t) => ({
   errorText: { ...type.body, color: t.colors.ink },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rowLabel: { ...type.headline, color: t.colors.ink },
-  rowValue: { ...type.headline, color: t.colors.ink2 },
+  segmentSkeleton: { height: 52, borderRadius: radii.pill },
   note: { ...type.caption, color: t.colors.ink2 },
 }));

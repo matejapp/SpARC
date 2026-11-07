@@ -13,4 +13,12 @@ public sealed class UsersController(IUserService userService) : BaseController
     [HttpGet("me")]
     public async Task<ActionResult<UserResponse>> Me() =>
         await userService.GetAsync(CurrentUserId);
+
+    /// <summary>
+    /// Changes the caller's own settings — the display currency (D-043). Same rule as GET: the
+    /// account is the token's subject, never a route or body value.
+    /// </summary>
+    [HttpPut("me")]
+    public async Task<ActionResult<UserResponse>> UpdateMe(UpdateUserRequest request) =>
+        await userService.UpdateAsync(CurrentUserId, request);
 }

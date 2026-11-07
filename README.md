@@ -254,7 +254,7 @@ not built yet.
 | | `POST /api/v1/auth/verify-email`, `POST /api/v1/auth/resend-verification` | public; iteration 5 |
 | | `POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/reset-password` | public; iteration 5 |
 | Account | `GET /api/v1/users/me` | |
-| | `PUT /api/v1/users/me` | preferred currency; iteration 3 |
+| | `PUT /api/v1/users/me` | `{ preferredCurrency }`, the display currency |
 | Categories | `GET /api/v1/categories?kind=`, `POST /api/v1/categories`, `DELETE /api/v1/categories/{id}` | system set + own; delete own only |
 | Transactions | `GET /api/v1/transactions?type=&from=&to=&categoryId=&uncategorised=&currency=&page=&pageSize=` | paged, newest first; every filter optional, combined with AND |
 | | `POST /api/v1/transactions` | |
