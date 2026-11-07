@@ -86,6 +86,9 @@ belongs to exactly one account and is visible to no one else.
 - Upcoming unpaid bills at a glance
 - A friendly empty state for a brand-new account
 
+### Settings
+- Dark (the default) or light theme, switched in Settings and remembered on the phone
+
 ### Categories
 - A built-in set of income and expense categories, shared by every account and protected
   from changes
@@ -94,13 +97,15 @@ belongs to exactly one account and is visible to no one else.
 ### Recurring bills
 - Add a bill with name, amount, currency, category and due date, repeating monthly
 - Calendar of upcoming due dates; open any date to see what's due and its status
-- Mark one month as paid — SpARC records the expense for you, exactly once
+- Each bill's own screen splits its months into To pay and Paid
+- Mark one month as paid — SpARC records the expense for you, exactly once; delete that
+  expense and the month is unpaid again
 - Each month stands alone: paying October doesn't touch November
 - Edit a bill and only future months change; delete it and its future due dates go with it,
   while paid history stays
 
 ### Reminders
-- A local notification 5 days before an unpaid bill is due, and again 24 hours before
+- A local notification at 09:00, 5 days before an unpaid bill is due and again the day before
 - Tapping a reminder opens that bill
 - Reminders stop as soon as the bill is marked paid
 - Notifications are optional: deny the permission and the calendar still works
@@ -206,7 +211,7 @@ as the one rule that cannot break.
 |---|---|
 | Mobile app | React Native with Expo, TypeScript, expo-router, TanStack Query |
 | On-device storage | `expo-secure-store` (tokens) |
-| Device features | Local notifications, camera |
+| Device features | Local notifications (`expo-notifications`), camera |
 | API | ASP.NET Core 10 Web API (controllers) |
 | Data access | Entity Framework Core 10 + Npgsql |
 | Database | PostgreSQL on Neon |
@@ -223,10 +228,10 @@ as the one rule that cannot break.
 |---|---|
 | `AspNetUsers` | Identity users, extended with the preferred display currency |
 | `Categories` | Shared system categories (`UserId` NULL) plus each user's own |
-| `Transactions` | Amount + currency as entered, rate to RSD and RSD value frozen at entry, date, category, optional link to a paid bill |
+| `Transactions` | Amount + currency as entered, rate to RSD and RSD value frozen at entry, date, category, optional link to the bill month it paid (unique) |
 | `RecurringBills` | A bill's current name, amount, currency, category, first due date and interval |
 | `BillOccurrences` | One row per bill per month, with its own status and the amount at due — so editing a bill never rewrites the past |
-| `FxRates` | One rate per currency per day |
+| `FxRates` | One rate per currency per day (iteration 3) |
 | `RefreshTokens` | Hashed refresh tokens with expiry and rotation chain |
 
 All timestamps are stored in UTC (`timestamptz`); calendar dates such as a transaction's day
@@ -237,7 +242,8 @@ or a bill's due date are stored as `date`. Every schema change is an EF Core mig
 ## API
 
 All endpoints are under `/api/v1` and require `Authorization: Bearer <token>` unless marked
-public. Errors are always `ProblemDetails`.
+public. Errors are always `ProblemDetails`. Endpoints marked with an iteration are planned,
+not built yet.
 
 | Area | Endpoint | |
 |---|---|---|
@@ -245,20 +251,22 @@ public. Errors are always `ProblemDetails`.
 | | `POST /api/v1/auth/login` | public |
 | | `POST /api/v1/auth/refresh` | public |
 | | `POST /api/v1/auth/logout` | |
-| | `POST /api/v1/auth/verify-email`, `POST /api/v1/auth/resend-verification` | public |
-| | `POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/reset-password` | public |
-| Account | `GET /api/v1/users/me`, `PUT /api/v1/users/me` | preferred currency |
+| | `POST /api/v1/auth/verify-email`, `POST /api/v1/auth/resend-verification` | public; iteration 5 |
+| | `POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/reset-password` | public; iteration 5 |
+| Account | `GET /api/v1/users/me` | |
+| | `PUT /api/v1/users/me` | preferred currency; iteration 3 |
 | Categories | `GET /api/v1/categories?kind=`, `POST /api/v1/categories`, `DELETE /api/v1/categories/{id}` | system set + own; delete own only |
 | Transactions | `GET /api/v1/transactions?page=&pageSize=` | paged, newest first; filters arrive in iteration 3 |
 | | `POST /api/v1/transactions` | |
 | | `GET`, `PUT`, `DELETE /api/v1/transactions/{id}` | |
 | Dashboard | `GET /api/v1/dashboard/summary?from=&to=` | income, expense, difference |
-| | `GET /api/v1/dashboard/trend`, `GET /api/v1/dashboard/by-category` | |
-| Bills | `GET /api/v1/bills`, `POST /api/v1/bills` | |
-| | `PUT`, `DELETE /api/v1/bills/{id}` | |
-| | `GET /api/v1/bills/occurrences?from=&to=` | calendar |
-| | `POST /api/v1/bills/occurrences/{id}/pay` | creates exactly one expense |
-| Receipts | `POST /api/v1/receipts/scan` | returns suggestions only — nothing is saved |
+| | `GET /api/v1/dashboard/trend`, `GET /api/v1/dashboard/by-category` | iteration 3 |
+| Bills | `GET /api/v1/bills?page=&pageSize=`, `POST /api/v1/bills` | paged; a new bill gets 12 months scheduled |
+| | `GET`, `PUT`, `DELETE /api/v1/bills/{id}` | editing changes future unpaid months only |
+| Bill months | `GET /api/v1/occurrences?from=&to=&billId=` | calendar, or one bill's months |
+| | `GET /api/v1/occurrences/upcoming?today=` | dashboard: overdue and due within 30 days |
+| | `POST /api/v1/occurrences/{id}/pay` | creates exactly one expense; 409 if already paid |
+| Receipts | `POST /api/v1/receipts/scan` | returns suggestions only — nothing is saved; iteration 4 |
 | Health | `GET /health` | public; checks the database |
 
 Example error:
@@ -296,11 +304,16 @@ sparc/
   app/
     app/                expo-router screens
       (auth)/           sign in, register, verify, reset
-      (tabs)/           dashboard, transactions, calendar, settings
+      (tabs)/           dashboard, transactions, calendar
+      add.tsx           add a transaction
+      transaction/      transaction detail and edit
+      bills.tsx         all bills
+      bill/             new bill, bill detail, edit bill
+      settings.tsx      profile, theme and sign-out, opened from the dashboard avatar
     components/
     api/                typed API client, one file per resource
     hooks/
-    lib/                money and date formatting, secure storage
+    lib/                themes, money and date formatting, secure storage, bill reminders
     types/
   dotnet-tools.json     pinned dotnet-ef
 ```
@@ -378,6 +391,13 @@ from inside the Expo Go app. Both need to be signed in to the same Expo account 
 says it can't reach the server, open `<EXPO_PUBLIC_API_URL>/health` in Safari on the phone
 to check the network path. Plain HTTP works inside Expo Go only; a dev build or the deployed
 app uses HTTPS.
+
+The PC's address changes with the network. On the phone's own hotspot, for example, the PC
+gets a `172.20.10.x` address instead of the home Wi-Fi one; check it with `ipconfig`. Change
+`EXPO_PUBLIC_API_URL` to match and restart with `npx expo start -c`: the value is built into
+the bundle, so a plain reload keeps the old address. A hotspot counts as a Public network, so
+the Private-only rules above don't apply there; allow the API in the Windows prompt the first
+time it starts.
 
 ### Receipt service
 
