@@ -80,18 +80,4 @@ public sealed class TransactionRepository(SparcDbContext db) : ITransactionRepos
         db.Transactions.Remove(transaction);
         await db.SaveChangesAsync();
     }
-
-    // One GROUP BY: at most two rows come back, whatever the number of transactions. Totals are
-    // AmountRsd, the frozen pivot value, never Amount (D-004).
-    public async Task<(decimal Income, decimal Expense)> SumByTypeAsync(Guid userId, DateOnly from, DateOnly to)
-    {
-        var totals = await db.Transactions
-            .Where(t => t.UserId == userId && t.OccurredOn >= from && t.OccurredOn <= to)
-            .GroupBy(t => t.Type)
-            .Select(g => new { Type = g.Key, Total = g.Sum(t => t.AmountRsd) })
-            .ToListAsync();
-
-        decimal TotalOf(TransactionType type) => totals.SingleOrDefault(t => t.Type == type)?.Total ?? 0m;
-        return (TotalOf(TransactionType.Income), TotalOf(TransactionType.Expense));
-    }
 }

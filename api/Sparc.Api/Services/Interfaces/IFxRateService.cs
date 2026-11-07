@@ -26,6 +26,17 @@ public interface IFxRateService
     Task<FrozenAmount?> FreezeAsync(string currency, decimal amount, DateOnly date);
 
     /// <summary>
+    /// Makes sure FxRates holds a usable row of <paramref name="currency"/> (EUR or USD) for every
+    /// one of <paramref name="dates"/>, fetching what is missing or still provisional in as few
+    /// provider calls as the dates allow. Returns the dates NBS has no rate for (before its first
+    /// list); every other date has a row afterwards. A provider failure is the 503 above.
+    /// </summary>
+    Task<IReadOnlyList<DateOnly>> EnsureRatesAsync(string currency, IReadOnlyCollection<DateOnly> dates);
+
+    /// <summary>Today's rate (Belgrade calendar) of <paramref name="currency"/>; 1 for RSD.</summary>
+    Task<decimal> TodayRateToRsdAsync(string currency);
+
+    /// <summary>
     /// Makes sure every date that has a transaction has final EUR and USD rows. Safe to re-run:
     /// dates already final are skipped. Stops at the first provider failure (Completed = false).
     /// </summary>

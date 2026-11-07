@@ -7,8 +7,8 @@ public sealed class DashboardSummaryResponse
     public required DateOnly To { get; init; }
 
     /// <summary>
-    /// The currency of the totals. Always RSD until preferred-currency display arrives in
-    /// iteration 3; the app reads it rather than assuming.
+    /// The currency of the totals: the caller's preferred currency (D-041). The app reads it
+    /// rather than assuming RSD.
     /// </summary>
     public required string Currency { get; init; }
 

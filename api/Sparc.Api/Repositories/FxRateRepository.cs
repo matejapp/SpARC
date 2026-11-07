@@ -45,6 +45,35 @@ public sealed class FxRateRepository(SparcDbContext db) : IFxRateRepository
             WHERE "FxRates"."IsFinal" = FALSE
             """);
 
+    // Primary-key lookups: (Date, Currency) = ANY(dates), one currency.
+    public Task<List<FxRate>> ListAsync(string currency, IReadOnlyCollection<DateOnly> dates) =>
+        db.FxRates.AsNoTracking()
+            .Where(r => r.Currency == currency && dates.Contains(r.Date))
+            .ToListAsync();
+
+    // The same statement as UpsertAsync over unnest()ed arrays: each array is one parameter, so the
+    // SQL text never depends on the values. Rows are unique per (Date, Currency) by construction
+    // (one batch, one currency), as ON CONFLICT DO UPDATE requires.
+    public Task UpsertManyAsync(IReadOnlyCollection<FxRate> rates)
+    {
+        var dates = rates.Select(r => r.Date).ToArray();
+        var currencies = rates.Select(r => r.Currency).ToArray();
+        var values = rates.Select(r => r.RateToRsd).ToArray();
+        var listDates = rates.Select(r => r.ListDate).ToArray();
+        var finals = rates.Select(r => r.IsFinal).ToArray();
+        var fetchedAt = rates.Select(r => r.FetchedAt).ToArray();
+        return db.Database.ExecuteSqlAsync($"""
+            INSERT INTO "FxRates" ("Date", "Currency", "RateToRsd", "ListDate", "IsFinal", "FetchedAt")
+            SELECT * FROM unnest({dates}, {currencies}, {values}, {listDates}, {finals}, {fetchedAt})
+            ON CONFLICT ("Date", "Currency") DO UPDATE
+            SET "RateToRsd" = EXCLUDED."RateToRsd",
+                "ListDate"  = EXCLUDED."ListDate",
+                "IsFinal"   = EXCLUDED."IsFinal",
+                "FetchedAt" = EXCLUDED."FetchedAt"
+            WHERE "FxRates"."IsFinal" = FALSE
+            """);
+    }
+
     // IgnoreQueryFilters: the backfill runs outside any request, for every user's transaction
     // dates, and reads the dates only — no amount, no owner, nothing returned to a client.
     // Unbounded on purpose: at most one row per calendar day since 2000, for an operator command.

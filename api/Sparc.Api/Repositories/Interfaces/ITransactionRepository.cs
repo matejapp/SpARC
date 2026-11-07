@@ -51,9 +51,4 @@ public interface ITransactionRepository
     /// </summary>
     Task DeleteAsync(Transaction transaction);
 
-    /// <summary>
-    /// Sum of AmountRsd per type between two dates, inclusive, computed by the database.
-    /// Zero for a type with no rows.
-    /// </summary>
-    Task<(decimal Income, decimal Expense)> SumByTypeAsync(Guid userId, DateOnly from, DateOnly to);
 }

@@ -72,7 +72,7 @@ export function MonthCard({
         accessible
         accessibilityLabel={
           summary
-            ? `${code}. Left this month ${formatSignedAmount(summary.difference)} RSD. ` +
+            ? `${code}. Left this month ${formatSignedAmount(summary.difference)} ${summary.currency}. ` +
               `Income ${formatSigned(summary.totalIncome, 'income')}, expense ${formatSigned(summary.totalExpense, 'expense')}.`
             : `${code}. Loading this month's totals.`
         }
@@ -92,7 +92,8 @@ export function MonthCard({
           <Text style={styles.caption}>Left this month</Text>
           {summary ? (
             <Text style={styles.amount}>
-              {formatSignedAmount(summary.difference)} <Text style={styles.currency}>RSD</Text>
+              {/* The preferred currency, as the API converted it (D-041). */}
+              {formatSignedAmount(summary.difference)} <Text style={styles.currency}>{summary.currency}</Text>
             </Text>
           ) : (
             <View style={[styles.bar, styles.barAmount]} />

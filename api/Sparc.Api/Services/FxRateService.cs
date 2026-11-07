@@ -100,6 +100,88 @@ public sealed class FxRateService(
         return new FrozenAmount(rateToRsd, amountRsd);
     }
 
+    public async Task<IReadOnlyList<DateOnly>> EnsureRatesAsync(string currency, IReadOnlyCollection<DateOnly> dates)
+    {
+        var code = currency.ToUpperInvariant();
+        if (!Currencies.Foreign.Contains(code))
+        {
+            throw new ArgumentOutOfRangeException(nameof(currency), currency, "Only EUR and USD have NBS rates.");
+        }
+        if (dates.Count == 0)
+        {
+            return [];
+        }
+
+        var stored = (await rates.ListAsync(code, dates)).ToDictionary(r => r.Date);
+        var today = TodayInBelgrade();
+        var todo = dates.Distinct()
+            .Where(d => !stored.TryGetValue(d, out var row) || NeedsRefresh(row, today))
+            .Order()
+            .ToList();
+        if (todo.Count == 0)
+        {
+            return [];
+        }
+
+        // One provider call per run of dates that fits in a batch: a 731-day period is one call.
+        var fetched = new Dictionary<DateOnly, ProviderDayRate>();
+        for (var i = 0; i < todo.Count;)
+        {
+            var start = todo[i];
+            var j = i;
+            while (j + 1 < todo.Count && todo[j + 1].DayNumber - start.DayNumber < IFxRateProvider.MaxBatchDays)
+            {
+                j++;
+            }
+            var batch = await provider.GetMiddleRatesAsync(code, start, todo[j].DayNumber - start.DayNumber + 1);
+            await EnsurePlausibleAsync(code, batch);
+            foreach (var day in batch)
+            {
+                fetched[day.Date] = day;
+            }
+            i = j + 1;
+        }
+
+        // Only the dates asked for are stored — the table holds the days that have transactions.
+        var now = DateTime.UtcNow;
+        var rows = todo.Where(fetched.ContainsKey).Select(d => fetched[d]).Select(day => new FxRate
+        {
+            Date = day.Date,
+            Currency = code,
+            RateToRsd = day.RateToRsd,
+            ListDate = day.ListDate,
+            IsFinal = day.Date < today || day.ListDate == day.Date,
+            FetchedAt = now,
+        }).ToList();
+        if (rows.Count > 0)
+        {
+            await rates.UpsertManyAsync(rows);
+        }
+
+        var withoutRate = todo.Where(d => !fetched.ContainsKey(d) && !stored.ContainsKey(d)).ToList();
+        logger.LogInformation("Ensured {Currency} rates: {Stored} stored, {Without} dates without an NBS rate",
+            code, rows.Count, withoutRate.Count);
+        return withoutRate;
+    }
+
+    public async Task<decimal> TodayRateToRsdAsync(string currency)
+    {
+        if (string.Equals(currency, Currencies.Rsd, StringComparison.OrdinalIgnoreCase))
+        {
+            return 1m;
+        }
+        var today = TodayInBelgrade();
+        var rate = await GetRateAsync(currency, today)
+                   ?? throw new InvalidOperationException($"No {currency} rate for today ({today:yyyy-MM-dd}).");
+        return rate.RateToRsd;
+    }
+
+    // GetRateAsync's rule: a final row is kept; a provisional one for today or later is re-checked
+    // at most every ProvisionalRefresh; a provisional row for a day already over is re-fetched,
+    // because that day's own list has since come out.
+    private static bool NeedsRefresh(FxRate row, DateOnly today) =>
+        !row.IsFinal && (row.Date < today || DateTime.UtcNow - row.FetchedAt >= ProvisionalRefresh);
+
     public async Task<FxBackfillResult> BackfillAsync()
     {
         var dates = await rates.ListTransactionDatesWithoutFinalRatesAsync(Currencies.Foreign);
@@ -150,17 +232,35 @@ public sealed class FxRateService(
     private async Task EnsurePlausibleAsync(string currency, DateOnly date, decimal rate)
     {
         var neighbour = await rates.FindNearestFinalAsync(currency, date, NeighbourDays);
-        if (neighbour is null)
+        if (neighbour is not null)
+        {
+            RefuseIfJump(currency, date, rate, neighbour.Date, neighbour.RateToRsd);
+        }
+    }
+
+    // A batch is checked as a chain: its first day against the nearest stored final rate, each
+    // later day against the day before it (consecutive calendar days, so the same 10 % is generous).
+    private async Task EnsurePlausibleAsync(string currency, IReadOnlyList<ProviderDayRate> batch)
+    {
+        if (batch.Count == 0)
         {
             return;
         }
+        await EnsurePlausibleAsync(currency, batch[0].Date, batch[0].RateToRsd);
+        for (var i = 1; i < batch.Count; i++)
+        {
+            RefuseIfJump(currency, batch[i].Date, batch[i].RateToRsd, batch[i - 1].Date, batch[i - 1].RateToRsd);
+        }
+    }
 
-        var deviation = Math.Abs(rate - neighbour.RateToRsd) / neighbour.RateToRsd;
+    private void RefuseIfJump(string currency, DateOnly date, decimal rate, DateOnly neighbourDate, decimal neighbourRate)
+    {
+        var deviation = Math.Abs(rate - neighbourRate) / neighbourRate;
         if (deviation > MaxDeviation)
         {
             logger.LogError(
                 "Refused NBS {Currency} rate {Rate} for {Date:yyyy-MM-dd}: {Deviation:P1} away from {Neighbour} on {NeighbourDate:yyyy-MM-dd}",
-                currency, rate, date, deviation, neighbour.RateToRsd, neighbour.Date);
+                currency, rate, date, deviation, neighbourRate, neighbourDate);
             throw new ServiceUnavailableException(
                 "Exchange rates are unavailable right now. Try again shortly.",
                 new InvalidDataException($"Implausible {currency} rate {rate} for {date:yyyy-MM-dd}."));

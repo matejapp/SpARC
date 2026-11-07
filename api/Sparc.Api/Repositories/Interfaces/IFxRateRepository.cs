@@ -18,6 +18,12 @@ public interface IFxRateRepository
     /// </summary>
     Task UpsertAsync(FxRate rate);
 
+    /// <summary>The stored rows of <paramref name="currency"/> among <paramref name="dates"/>.</summary>
+    Task<List<FxRate>> ListAsync(string currency, IReadOnlyCollection<DateOnly> dates);
+
+    /// <summary><see cref="UpsertAsync"/> for many rows, in one statement.</summary>
+    Task UpsertManyAsync(IReadOnlyCollection<FxRate> rates);
+
     /// <summary>
     /// Every date that has a transaction (any user) and lacks a final rate in at least one of
     /// <paramref name="currencies"/>, oldest first. For the fx-backfill command only.

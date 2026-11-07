@@ -5,19 +5,23 @@ using Sparc.Api.Services.Interfaces;
 
 namespace Sparc.Api.Services;
 
-public sealed class DashboardService(ITransactionRepository transactions) : IDashboardService
+/// <summary>The dashboard's month card, in the caller's preferred currency (D-041).</summary>
+public sealed class DashboardService(
+    IAnalyticsRepository analytics,
+    IDisplayCurrencyService displayCurrency) : IDashboardService
 {
     public async Task<DashboardSummaryResponse> GetSummaryAsync(Guid userId, DashboardSummaryQuery query)
     {
         var (from, to) = query is { From: { } f, To: { } t } ? (f, t) : CurrentMonth();
 
-        var (income, expense) = await transactions.SumByTypeAsync(userId, from, to);
+        var currency = await displayCurrency.PrepareAsync(userId, from, to);
+        var (income, expense) = await analytics.TotalsByTypeAsync(userId, from, to, currency);
 
         return new DashboardSummaryResponse
         {
             From = from,
             To = to,
-            Currency = Currencies.Rsd,
+            Currency = currency,
             TotalIncome = income,
             TotalExpense = expense,
             Difference = income - expense,

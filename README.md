@@ -259,7 +259,7 @@ not built yet.
 | Transactions | `GET /api/v1/transactions?type=&from=&to=&categoryId=&uncategorised=&currency=&page=&pageSize=` | paged, newest first; every filter optional, combined with AND |
 | | `POST /api/v1/transactions` | |
 | | `GET`, `PUT`, `DELETE /api/v1/transactions/{id}` | |
-| Dashboard | `GET /api/v1/dashboard/summary?from=&to=` | income, expense, difference |
+| Dashboard | `GET /api/v1/dashboard/summary?from=&to=` | income, expense, difference, in the preferred currency |
 | | `GET /api/v1/dashboard/trend`, `GET /api/v1/dashboard/by-category` | iteration 3 |
 | Bills | `GET /api/v1/bills?page=&pageSize=`, `POST /api/v1/bills` | paged; a new bill gets 12 months scheduled |
 | | `GET`, `PUT`, `DELETE /api/v1/bills/{id}` | editing changes future unpaid months only |

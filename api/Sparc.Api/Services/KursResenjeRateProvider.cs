@@ -87,6 +87,82 @@ public sealed class KursResenjeRateProvider(HttpClient http, ILogger<KursResenje
         }
     }
 
+    /// <summary>
+    /// <c>GET api/v1/currencies/{code}/rates/{from}/count/{n}</c>: one entry per calendar day, each
+    /// with the list in force that day (weekends, holidays and future days repeat the latest list),
+    /// at most 1000 days. Days before HistoryStart are left out by the provider.
+    /// </summary>
+    public async Task<IReadOnlyList<ProviderDayRate>> GetMiddleRatesAsync(string currency, DateOnly from, int days)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(days, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(days, IFxRateProvider.MaxBatchDays);
+
+        var last = from.AddDays(days - 1);
+        if (last < HistoryStart)
+        {
+            return [];
+        }
+        if (from < HistoryStart)
+        {
+            days -= HistoryStart.DayNumber - from.DayNumber;
+            from = HistoryStart;
+        }
+
+        var start = from.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var range = $"{start}+{days}d";
+        var path = $"api/v1/currencies/{currency.ToLowerInvariant()}/rates/{start}/count/{days}";
+        var started = Stopwatch.GetTimestamp();
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await http.GetAsync(path);
+        }
+        catch (HttpRequestException e)
+        {
+            throw Unavailable(currency, range, "the request failed", e);
+        }
+        catch (TaskCanceledException e) when (e.InnerException is TimeoutException)
+        {
+            throw Unavailable(currency, range, $"no answer within {http.Timeout.TotalSeconds:0} s", e);
+        }
+
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                throw Unavailable(currency, range, $"HTTP {(int)response.StatusCode}");
+            }
+
+            var body = await ReadAsync<KursRates>(response, currency, range);
+            if (body?.Rates is not { } items)
+            {
+                throw Unavailable(currency, range, "the answer had no rates");
+            }
+
+            var result = new List<ProviderDayRate>(items.Count);
+            foreach (var r in items)
+            {
+                // The same checks as one day's answer, plus: inside the asked range, each day once.
+                if (r is null
+                    || !string.Equals(r.Code, currency, StringComparison.OrdinalIgnoreCase)
+                    || r.Date < from || r.Date > last
+                    || r.DateFrom > r.Date
+                    || r.ExchangeMiddle <= 0
+                    || r.ExchangeMiddle.Scale > 6
+                    || (result.Count > 0 && r.Date <= result[^1].Date))
+                {
+                    throw Unavailable(currency, range, "the answer failed validation");
+                }
+                result.Add(new ProviderDayRate(r.Date, r.ExchangeMiddle, r.DateFrom));
+            }
+
+            logger.LogInformation("Fetched NBS {Currency} rates for {Days} days from {From}: {Count} in {ElapsedMs:0} ms",
+                currency, days, start, result.Count, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+            return result;
+        }
+    }
+
     private async Task<T?> ReadAsync<T>(HttpResponseMessage response, string currency, string day)
     {
         try
@@ -113,6 +189,8 @@ public sealed class KursResenjeRateProvider(HttpClient http, ILogger<KursResenje
         [property: JsonPropertyName("date")] DateOnly Date,
         [property: JsonPropertyName("date_from")] DateOnly DateFrom,
         [property: JsonPropertyName("exchange_middle")] decimal ExchangeMiddle);
+
+    private sealed record KursRates([property: JsonPropertyName("rates")] List<KursRate?>? Rates);
 
     private sealed record ProviderError([property: JsonPropertyName("message")] string? Message);
 }
