@@ -3,16 +3,18 @@ import { router } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, Text, View } from 'react-native';
 
-import { ActivityIcon, CalendarIcon, HomeIcon, PlusIcon } from '@/components/icons';
+import { ActivityIcon, AnalyticsIcon, CalendarIcon, HomeIcon, PlusIcon } from '@/components/icons';
 import { makeStyles, radii, type, useTheme } from '@/lib/theme';
 
-// The board's bottom bar — Home, Activity, the cantaloupe add button — plus Calendar, which
-// joins in Sprint 2 (D-028). It replaces the default tab bar, so it does the default's job too:
-// emit `tabPress` and switch tabs.
+// The bottom bar: Home · Activity · ＋ · Analytics · Calendar (D-028 added Calendar, Sprint 3
+// Analytics; board → Analytics tab). The add button sits in the middle, two tabs either side.
+// It replaces the default tab bar, so it does the default's job too: emit `tabPress` and switch
+// tabs. Tabs share the width, so the bar fits a 320 pt phone.
 
 const TABS: Record<string, { label: string; Icon: (p: { color: string; active: boolean; size?: number }) => React.JSX.Element }> = {
   index: { label: 'Home', Icon: HomeIcon },
   transactions: { label: 'Activity', Icon: ActivityIcon },
+  analytics: { label: 'Analytics', Icon: AnalyticsIcon },
   calendar: { label: 'Calendar', Icon: (p) => <CalendarIcon {...p} size={22} /> },
 };
 
@@ -62,6 +64,7 @@ export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarPr
         </LinearGradient>
       </Pressable>
       {tab(2)}
+      {tab(3)}
     </View>
   );
 }
@@ -77,7 +80,7 @@ const useStyles = makeStyles((t) => ({
     boxShadow: t.shadows.tabBar,
   },
   tab: {
-    width: 72,
+    flex: 1,
     minHeight: 48,
     alignItems: 'center',
     gap: 4,
@@ -86,6 +89,7 @@ const useStyles = makeStyles((t) => ({
     width: 56,
     height: 56,
     marginTop: -26,
+    marginHorizontal: 4,
     borderRadius: radii.pill,
     boxShadow: t.shadows.addButton,
   },

@@ -311,7 +311,7 @@ sparc/
   app/
     app/                expo-router screens
       (auth)/           sign in, register, verify, reset
-      (tabs)/           dashboard, transactions, calendar
+      (tabs)/           dashboard, transactions, analytics, calendar
       add.tsx           add a transaction
       transaction/      transaction detail and edit
       bills.tsx         all bills

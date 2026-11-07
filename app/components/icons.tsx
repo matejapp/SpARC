@@ -36,6 +36,21 @@ export function ActivityIcon({ color, size = 22, active }: TabIconProps) {
   );
 }
 
+// Three bars on a baseline (board → Analytics tab).
+export function AnalyticsIcon({ color, size = 22, active }: TabIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" accessible={false}>
+      <Path
+        d="M5 20v-7M12 20V5M19 20v-10M3 20h18"
+        fill="none"
+        stroke={color}
+        strokeWidth={active ? 2.2 : 1.8}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
 export function PlusIcon({ color, size = 24 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" accessible={false}>
