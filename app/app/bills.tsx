@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { RowsSkeleton } from '@/components/ui/Skeleton';
 import { flattenBills, useBillList } from '@/hooks/useBills';
 import { dueDay, todayIso } from '@/lib/dates';
-import { formatAmount } from '@/lib/money';
+import { formatAmount, formatMoney } from '@/lib/money';
 import { makeStyles, radii, spacing, tabularNums, type, useTheme } from '@/lib/theme';
 import type { BillResponse } from '@/types/api';
 
@@ -44,7 +44,10 @@ function BillRow({ bill, today, divider }: { bill: BillResponse; today: string; 
           {caption}
         </Text>
       </View>
-      <Text style={styles.amount}>{formatAmount(bill.amount)}</Text>
+      {/* RSD rows leave the code out, as transaction rows do; other currencies show it. */}
+      <Text style={styles.amount}>
+        {bill.currency === 'RSD' ? formatAmount(bill.amount) : formatMoney(bill.amount, bill.currency)}
+      </Text>
     </Pressable>
   );
 }

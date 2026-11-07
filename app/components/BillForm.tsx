@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
+import { CurrencyMenu } from '@/components/CurrencyMenu';
 import { DateField } from '@/components/DateField';
 import { FormScreen } from '@/components/FormScreen';
 import { ErrorBanner } from '@/components/ui/Banner';
@@ -12,11 +13,12 @@ import { useCategories } from '@/hooks/useTransactions';
 import { billDueDateRange, dayOrdinal, fromIsoDate, todayIso } from '@/lib/dates';
 import { parseAmount } from '@/lib/money';
 import { makeStyles, radii, tabularNums, type, useTheme } from '@/lib/theme';
-import type { BillRequest, IsoDate } from '@/types/api';
+import type { BillRequest, Currency, IsoDate } from '@/types/api';
 
 export type BillDraft = {
   name: string;
   amountText: string;
+  currency: Currency;
   categoryId: string | null;
   firstDueDate: IsoDate;
   monthly: boolean;
@@ -25,6 +27,7 @@ export type BillDraft = {
 export const emptyBillDraft = (): BillDraft => ({
   name: '',
   amountText: '',
+  currency: 'RSD',
   categoryId: null,
   firstDueDate: todayIso(),
   monthly: true,
@@ -102,15 +105,15 @@ export function BillForm({
     onSubmit({
       name,
       amount: amount.value,
-      currency: 'RSD', // the only currency the API accepts until multi-currency
+      currency: draft.currency, // a month freezes the NBS rate only when it is paid (D-039)
       categoryId: draft.categoryId,
       firstDueDate: draft.firstDueDate,
       monthly: draft.monthly,
     });
   }
 
-  // An error that names none of this form's fields (a missing category, the RSD-only rule, the
-  // network) goes in the banner instead.
+  // An error that names none of this form's fields (a missing category, the network) goes in the
+  // banner instead.
   const onAField =
     error instanceof ApiError && FORM_FIELDS.some((field) => error.fieldErrors[field]);
   const banner = error && !onAField ? error.message : null;
@@ -140,19 +143,19 @@ export function BillForm({
             placeholderTextColor={colors.placeholder}
             keyboardAppearance={scheme}
             keyboardType="decimal-pad"
-            accessibilityLabel="Amount each time, in RSD"
+            accessibilityLabel={`Amount each time, in ${draft.currency}`}
             accessibilityHint={errors.amount}
             maxLength={20}
             style={styles.amountInput}
           />
-          <View style={styles.currencyPill}>
-            <Text style={styles.currencyText}>RSD</Text>
-          </View>
+          <CurrencyMenu value={draft.currency} onChange={(currency) => set({ currency })} />
         </View>
         {errors.amount ? (
           <Text style={styles.error} accessibilityRole="alert">
             {errors.amount}
           </Text>
+        ) : draft.currency !== 'RSD' ? (
+          <Text style={styles.conversion}>Each payment converts at the NBS rate for the day it's paid.</Text>
         ) : null}
       </View>
 
@@ -261,15 +264,7 @@ const useStyles = makeStyles((t) => ({
     textAlign: 'right',
     padding: 0,
   },
-  currencyPill: {
-    height: 32,
-    paddingHorizontal: 12,
-    borderRadius: radii.pill,
-    backgroundColor: t.colors.surface,
-    boxShadow: t.shadows.outline,
-    justifyContent: 'center',
-  },
-  currencyText: { ...type.pill, color: t.colors.ink },
+  conversion: { ...type.caption, color: t.colors.ink2, marginTop: 8, textAlign: 'center' },
   name: { marginTop: 22 },
   section: { marginTop: 22, gap: 10 },
   sectionLabel: { ...type.label, color: t.colors.ink2 },

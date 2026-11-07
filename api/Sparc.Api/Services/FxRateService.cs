@@ -70,6 +70,36 @@ public sealed class FxRateService(
                ?? throw new InvalidOperationException($"FxRates row {code} {date:yyyy-MM-dd} missing right after its upsert.");
     }
 
+    public async Task<FrozenAmount?> FreezeAsync(string currency, decimal amount, DateOnly date)
+    {
+        decimal rateToRsd;
+        if (string.Equals(currency, Currencies.Rsd, StringComparison.OrdinalIgnoreCase))
+        {
+            // Never calls the provider, so an FX outage can't block an RSD entry (D-038).
+            rateToRsd = 1m;
+        }
+        else
+        {
+            var rate = await GetRateAsync(currency, date);
+            if (rate is null)
+            {
+                return null;
+            }
+            rateToRsd = rate.RateToRsd;
+        }
+
+        var amountRsd = Money.ToRsd(amount, rateToRsd);
+
+        // A foreign amount the DTO accepted can still be ~117× too large for AmountRsd's
+        // numeric(18,2); Postgres would refuse it with a 500.
+        if (amountRsd > Money.MaxAmount)
+        {
+            throw new DomainValidationException("Amount", "Amount is too large.");
+        }
+
+        return new FrozenAmount(rateToRsd, amountRsd);
+    }
+
     public async Task<FxBackfillResult> BackfillAsync()
     {
         var dates = await rates.ListTransactionDatesWithoutFinalRatesAsync(Currencies.Foreign);

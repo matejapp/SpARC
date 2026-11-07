@@ -13,6 +13,7 @@ namespace Sparc.Api.Services;
 /// </summary>
 public sealed class BillOccurrenceService(
     IBillOccurrenceRepository occurrences,
+    IFxRateService fxRates,
     ILogger<BillOccurrenceService> logger) : IBillOccurrenceService
 {
     public async Task<List<OccurrenceResponse>> ListAsync(Guid userId, OccurrenceListQuery query)
@@ -49,12 +50,12 @@ public sealed class BillOccurrenceService(
             throw new ConflictException("This month is already paid.");
         }
 
-        // Bills are RSD-only until FX rates exist (D-034), so the frozen rate is 1. A non-RSD
-        // month cannot exist yet; paying one at rate 1 would freeze a wrong rate forever (D-004).
-        if (occurrence.CurrencyAtDue != Currencies.Rsd)
-        {
-            throw new InvalidOperationException($"Occurrence {occurrence.Id} is not in RSD.");
-        }
+        // The expense freezes the rate for the day it was paid, like any transaction (D-039): the
+        // month is money spent on PaidOn. Taken before anything changes, so a 503 or a 400 leaves
+        // the month pending; no database transaction waits on the provider.
+        var paidOn = request.PaidOn!.Value;
+        var frozen = await fxRates.FreezeAsync(occurrence.CurrencyAtDue, occurrence.AmountAtDue, paidOn)
+            ?? throw new DomainValidationException(nameof(PayOccurrenceRequest.PaidOn), TransactionService.NoRateMessage);
 
         var bill = occurrence.RecurringBill;
         occurrence.Status = BillOccurrenceStatus.Paid;
@@ -66,10 +67,10 @@ public sealed class BillOccurrenceService(
             Type = TransactionType.Expense,
             Amount = occurrence.AmountAtDue,
             Currency = occurrence.CurrencyAtDue,
-            RateToRsd = 1m,
-            AmountRsd = Money.ToRsd(occurrence.AmountAtDue, 1m),
+            RateToRsd = frozen.RateToRsd,
+            AmountRsd = frozen.AmountRsd,
             CategoryId = bill.CategoryId,
-            OccurredOn = request.PaidOn!.Value,
+            OccurredOn = paidOn,
             Description = bill.Name,
             BillOccurrenceId = occurrence.Id,
         };

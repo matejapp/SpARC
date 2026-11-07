@@ -113,14 +113,6 @@ public sealed class RecurringBillService(
     /// <summary>The rules a DTO cannot check. Returns the category the bill will point to.</summary>
     private async Task<Category> ValidateAsync(Guid userId, BillRequest request)
     {
-        // RSD only until FX rates exist (iteration 3). Paying a EUR bill now would freeze
-        // RateToRsd = 1 on its expense, and a frozen rate is never corrected (D-004, D-024).
-        if (!string.Equals(request.Currency, Currencies.Rsd, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new DomainValidationException(nameof(BillRequest.Currency),
-                "Only RSD is supported until multi-currency arrives.");
-        }
-
         // Another user's category gets the same answer as a missing one.
         var category = await categories.FindVisibleAsync(userId, request.CategoryId!.Value)
             ?? throw new DomainValidationException(nameof(BillRequest.CategoryId), "Category was not found.");
@@ -138,7 +130,9 @@ public sealed class RecurringBillService(
     {
         bill.Name = request.Name.Trim();
         bill.Amount = request.Amount!.Value;
-        bill.Currency = Currencies.Rsd;
+        // [SupportedCurrency] has already limited it to RSD/EUR/USD, case-insensitively. A bill
+        // holds no rate: a month freezes one only when it is paid (D-039).
+        bill.Currency = request.Currency.ToUpperInvariant();
         bill.CategoryId = request.CategoryId!.Value;
         bill.FirstDueDate = request.FirstDueDate!.Value;
         bill.IntervalMonths = request.Monthly!.Value ? 1 : null;

@@ -16,6 +16,7 @@ function toDraft(b: BillResponse): BillDraft {
   return {
     name: b.name,
     amountText: formatAmount(b.amount),
+    currency: b.currency,
     categoryId: b.categoryId, // null when its category was deleted: the form asks for a new one
     firstDueDate: b.firstDueDate,
     monthly: b.monthly,

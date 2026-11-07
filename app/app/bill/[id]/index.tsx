@@ -70,7 +70,9 @@ export default function BillScreen() {
   function confirmPay(o: OccurrenceResponse) {
     Alert.alert(
       `Mark ${monthName(o.dueDate)} paid?`,
-      `Adds a ${formatMoney(o.amount, o.currency)} expense dated today. You can edit it afterwards.`,
+      `Adds a ${formatMoney(o.amount, o.currency)} expense dated today` +
+        (o.currency === 'RSD' ? '' : ", at today's NBS rate") +
+        '. You can edit it afterwards.',
       [
         { text: 'Cancel', style: 'cancel' },
         {

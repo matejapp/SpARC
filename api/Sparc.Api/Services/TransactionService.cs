@@ -137,28 +137,14 @@ public sealed class TransactionService(
     /// </summary>
     private async Task FreezeRateAsync(Transaction transaction)
     {
-        if (transaction.Currency == Currencies.Rsd)
-        {
-            transaction.RateToRsd = 1m;
-        }
-        else
-        {
-            // A ServiceUnavailableException (503) passes through: nothing is saved.
-            var rate = await fxRates.GetRateAsync(transaction.Currency, transaction.OccurredOn)
-                ?? throw new DomainValidationException(nameof(TransactionRequest.OccurredOn),
-                    "No official NBS exchange rate exists for this date. Enter the amount in RSD.");
-            transaction.RateToRsd = rate.RateToRsd;
-        }
-
-        transaction.AmountRsd = Money.ToRsd(transaction.Amount, transaction.RateToRsd);
-
-        // A foreign amount the DTO accepted can still be ~117× too large for AmountRsd's
-        // numeric(18,2); Postgres would refuse it with a 500.
-        if (transaction.AmountRsd > Money.MaxAmount)
-        {
-            throw new DomainValidationException(nameof(TransactionRequest.Amount), "Amount is too large.");
-        }
+        // A ServiceUnavailableException (503) passes through: nothing is saved.
+        var frozen = await fxRates.FreezeAsync(transaction.Currency, transaction.Amount, transaction.OccurredOn)
+            ?? throw new DomainValidationException(nameof(TransactionRequest.OccurredOn), NoRateMessage);
+        transaction.RateToRsd = frozen.RateToRsd;
+        transaction.AmountRsd = frozen.AmountRsd;
     }
+
+    internal const string NoRateMessage = "No official NBS exchange rate exists for this date. Enter the amount in RSD.";
 
     /// <summary>Shared with BillOccurrenceService, which answers a payment with its expense.</summary>
     internal static TransactionResponse ToResponse(Transaction transaction, Category? category) => new()
