@@ -8,7 +8,7 @@ public interface IFxRateService
 {
     /// <summary>
     /// The NBS middle rate of EUR or USD for <paramref name="date"/>, from FxRates, fetched and
-    /// stored on first use. Null when NBS has no rate for that date (before 2003) — a fact about the
+    /// stored on first use. Null when NBS has no rate for that date (before 2002-05-16) — a fact about the
     /// date, for the caller to turn into a validation error. Throws
     /// <see cref="Common.ServiceUnavailableException"/> (503) when a fetch is needed and fails.
     /// </summary>

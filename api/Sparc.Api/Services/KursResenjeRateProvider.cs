@@ -12,7 +12,7 @@ namespace Sparc.Api.Services;
 /// NBS middle rates from kurs.resenje.org, a free mirror of the official NBS lists (no key):
 /// <c>GET api/v1/currencies/{code}/rates/{yyyy-MM-dd}</c>. For any date it answers the list in
 /// force on that date — the latest one issued on or before it — with that list's date in
-/// <c>date_from</c>. Its history starts in 2003; earlier dates are a 404 "Rate Not Found".
+/// <c>date_from</c>. Its history starts on 2002-05-16; earlier dates are a 404 "Rate Not Found".
 /// One attempt per call, no retries: the caller is a request that is waiting.
 /// </summary>
 public sealed class KursResenjeRateProvider(HttpClient http, ILogger<KursResenjeRateProvider> logger)
@@ -20,8 +20,17 @@ public sealed class KursResenjeRateProvider(HttpClient http, ILogger<KursResenje
 {
     private const string RateNotFound = "Rate Not Found";
 
+    // The first list the provider has. Earlier dates are answered here, without a request: no row
+    // is stored for "no rate", so each such request would otherwise reach the provider again.
+    private static readonly DateOnly HistoryStart = new(2002, 5, 16);
+
     public async Task<ProviderRate?> GetMiddleRateAsync(string currency, DateOnly date)
     {
+        if (date < HistoryStart)
+        {
+            return null;
+        }
+
         var day = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         var path = $"api/v1/currencies/{currency.ToLowerInvariant()}/rates/{day}";
         var started = Stopwatch.GetTimestamp();

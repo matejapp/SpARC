@@ -19,6 +19,14 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
             table.HasCheckConstraint("CK_Transactions_AmountRsd_Positive", "\"AmountRsd\" > 0");
             table.HasCheckConstraint("CK_Transactions_RateToRsd_Positive", "\"RateToRsd\" > 0");
             table.HasCheckConstraint("CK_Transactions_Currency", $"\"Currency\" IN ({Currencies.SqlList})");
+
+            // The frozen pair always agrees with the amount (D-038): the RSD value is the amount at
+            // the frozen rate, rounded once (Money.ToRsd rounds the same way), and RSD is its own
+            // rate. A rate and an amount that disagree cannot be stored, however a row is written.
+            table.HasCheckConstraint("CK_Transactions_AmountRsd_Matches",
+                "\"AmountRsd\" = round(\"Amount\" * \"RateToRsd\", 2)");
+            table.HasCheckConstraint("CK_Transactions_Rsd_RateIsOne",
+                $"\"Currency\" <> '{Currencies.Rsd}' OR \"RateToRsd\" = 1");
         });
     }
 }

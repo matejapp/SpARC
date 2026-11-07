@@ -1,3 +1,4 @@
+using Sparc.Api.Common;
 using System.ComponentModel.DataAnnotations;
 
 namespace Sparc.Api.Validators;
@@ -10,9 +11,6 @@ namespace Sparc.Api.Validators;
 public sealed class MoneyAmountAttribute()
     : ValidationAttribute("Amount must be greater than 0 with at most 2 decimal places.")
 {
-    // numeric(18,2): 16 digits before the point.
-    private const decimal Max = 9_999_999_999_999_999.99m;
-
     public override bool IsValid(object? value) =>
-        value is null || (value is decimal amount && amount > 0 && amount <= Max && decimal.Round(amount, 2) == amount);
+        value is null || (value is decimal amount && amount > 0 && amount <= Money.MaxAmount && decimal.Round(amount, 2) == amount);
 }

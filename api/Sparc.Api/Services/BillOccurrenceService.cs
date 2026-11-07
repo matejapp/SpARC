@@ -67,7 +67,7 @@ public sealed class BillOccurrenceService(
             Amount = occurrence.AmountAtDue,
             Currency = occurrence.CurrencyAtDue,
             RateToRsd = 1m,
-            AmountRsd = occurrence.AmountAtDue,
+            AmountRsd = Money.ToRsd(occurrence.AmountAtDue, 1m),
             CategoryId = bill.CategoryId,
             OccurredOn = request.PaidOn!.Value,
             Description = bill.Name,

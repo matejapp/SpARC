@@ -13,6 +13,7 @@ namespace Sparc.Api.Services;
 public sealed class TransactionService(
     ITransactionRepository transactions,
     ICategoryRepository categories,
+    IFxRateService fxRates,
     ILogger<TransactionService> logger) : ITransactionService
 {
     public async Task<PagedResponse<TransactionResponse>> ListAsync(Guid userId, TransactionListQuery query)
@@ -40,6 +41,7 @@ public sealed class TransactionService(
 
         var transaction = new Transaction { UserId = userId, Currency = Currencies.Rsd };
         Apply(transaction, request);
+        await FreezeRateAsync(transaction);
 
         await transactions.AddAsync(transaction);
         logger.LogInformation("Transaction created {TransactionId} for {UserId}", transaction.Id, userId);
@@ -61,7 +63,19 @@ public sealed class TransactionService(
         }
 
         await ValidateAsync(userId, request);
+
+        // A new amount, currency or date is a new entry of the value, so the rate is taken again
+        // (D-038). Category or description alone leave the frozen pair untouched.
+        var valueChanged = transaction.Amount != request.Amount
+                           || transaction.Currency != request.Currency.ToUpperInvariant()
+                           || transaction.OccurredOn != request.OccurredOn;
         Apply(transaction, request);
+        if (valueChanged)
+        {
+            // If this throws (no rate, provider down), nothing is saved: the tracked changes are
+            // discarded with the request's DbContext.
+            await FreezeRateAsync(transaction);
+        }
 
         await transactions.SaveAsync();
         logger.LogInformation("Transaction updated {TransactionId} for {UserId}", id, userId);
@@ -90,14 +104,6 @@ public sealed class TransactionService(
     /// <summary>The rules a DTO cannot check. Returns the category the transaction will point to.</summary>
     private async Task<Category> ValidateAsync(Guid userId, TransactionRequest request)
     {
-        // RSD only until FX rates exist (iteration 3). Saving EUR now would freeze RateToRsd = 1
-        // on it, and a frozen rate is never corrected (D-004).
-        if (!string.Equals(request.Currency, Currencies.Rsd, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new DomainValidationException(nameof(TransactionRequest.Currency),
-                "Only RSD is supported until multi-currency arrives.");
-        }
-
         // Another user's category gets the same answer as a missing one.
         var category = await categories.FindVisibleAsync(userId, request.CategoryId!.Value)
             ?? throw new DomainValidationException(nameof(TransactionRequest.CategoryId), "Category was not found.");
@@ -119,12 +125,39 @@ public sealed class TransactionService(
         transaction.CategoryId = request.CategoryId!.Value;
         transaction.OccurredOn = request.OccurredOn!.Value;
         transaction.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
+        // [SupportedCurrency] has already limited it to RSD/EUR/USD, case-insensitively.
+        transaction.Currency = request.Currency.ToUpperInvariant();
+    }
 
-        // RSD only this sprint, so the frozen rate is 1 (D-004). Iteration 3 looks the rate up for
-        // a new currency; an edit that keeps the currency keeps the rate it was saved with.
-        transaction.Currency = Currencies.Rsd;
-        transaction.RateToRsd = 1m;
-        transaction.AmountRsd = transaction.Amount * transaction.RateToRsd;
+    /// <summary>
+    /// Freezes the rate in force for the transaction's own date (D-037, D-038): RSD is 1 and never
+    /// calls the provider, so an FX outage can't block an RSD entry; EUR and USD take the NBS
+    /// middle rate from FxRates. Runs after validation, so a bad request never reaches the
+    /// provider, and before the save, so no database transaction waits on it.
+    /// </summary>
+    private async Task FreezeRateAsync(Transaction transaction)
+    {
+        if (transaction.Currency == Currencies.Rsd)
+        {
+            transaction.RateToRsd = 1m;
+        }
+        else
+        {
+            // A ServiceUnavailableException (503) passes through: nothing is saved.
+            var rate = await fxRates.GetRateAsync(transaction.Currency, transaction.OccurredOn)
+                ?? throw new DomainValidationException(nameof(TransactionRequest.OccurredOn),
+                    "No official NBS exchange rate exists for this date. Enter the amount in RSD.");
+            transaction.RateToRsd = rate.RateToRsd;
+        }
+
+        transaction.AmountRsd = Money.ToRsd(transaction.Amount, transaction.RateToRsd);
+
+        // A foreign amount the DTO accepted can still be ~117× too large for AmountRsd's
+        // numeric(18,2); Postgres would refuse it with a 500.
+        if (transaction.AmountRsd > Money.MaxAmount)
+        {
+            throw new DomainValidationException(nameof(TransactionRequest.Amount), "Amount is too large.");
+        }
     }
 
     /// <summary>Shared with BillOccurrenceService, which answers a payment with its expense.</summary>

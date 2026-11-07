@@ -608,6 +608,8 @@ namespace Sparc.Api.Migrations
 
                     b.ToTable("Transactions", t =>
                         {
+                            t.HasCheckConstraint("CK_Transactions_AmountRsd_Matches", "\"AmountRsd\" = round(\"Amount\" * \"RateToRsd\", 2)");
+
                             t.HasCheckConstraint("CK_Transactions_AmountRsd_Positive", "\"AmountRsd\" > 0");
 
                             t.HasCheckConstraint("CK_Transactions_Amount_Positive", "\"Amount\" > 0");
@@ -615,6 +617,8 @@ namespace Sparc.Api.Migrations
                             t.HasCheckConstraint("CK_Transactions_Currency", "\"Currency\" IN ('RSD', 'EUR', 'USD')");
 
                             t.HasCheckConstraint("CK_Transactions_RateToRsd_Positive", "\"RateToRsd\" > 0");
+
+                            t.HasCheckConstraint("CK_Transactions_Rsd_RateIsOne", "\"Currency\" <> 'RSD' OR \"RateToRsd\" = 1");
                         });
                 });
 
