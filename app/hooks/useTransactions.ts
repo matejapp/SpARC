@@ -15,6 +15,7 @@ import {
   updateTransaction,
 } from '@/api/transactions';
 import { rescheduleReminders } from '@/lib/reminders';
+import type { TransactionFilters } from '@/lib/transactionFilters';
 import type { PagedResponse, TransactionRequest, TransactionResponse, TransactionType } from '@/types/api';
 
 // Every transaction query lives under the ['transactions'] prefix, so one invalidation after a
@@ -23,11 +24,15 @@ import type { PagedResponse, TransactionRequest, TransactionResponse, Transactio
 const LIST_KEY = ['transactions', 'list'] as const;
 type ListData = InfiniteData<PagedResponse<TransactionResponse>>;
 
-/** Newest first, a page at a time. Pages are offset-based (D-024): see flattenPages. */
-export function useTransactionList() {
+/**
+ * Newest first, a page at a time. Pages are offset-based (D-024): see flattenPages. One cache
+ * entry per filter combination, ['transactions', 'list', filters]; the dashboard's unfiltered
+ * list is the {} entry. Invalidating ['transactions'] or LIST_KEY reaches every one of them.
+ */
+export function useTransactionList(filters: TransactionFilters = {}) {
   return useInfiniteQuery({
-    queryKey: LIST_KEY,
-    queryFn: ({ pageParam }) => listTransactions(pageParam),
+    queryKey: [...LIST_KEY, filters],
+    queryFn: ({ pageParam }) => listTransactions(pageParam, filters),
     initialPageParam: 1,
     getNextPageParam: (last) =>
       last.page * last.pageSize < last.totalCount ? last.page + 1 : undefined,
@@ -57,9 +62,15 @@ export function useTransaction(id: string) {
   return useQuery({
     queryKey: ['transactions', 'detail', id],
     queryFn: () => getTransaction(id),
-    // Opened from the list: show the row already in hand while the fresh copy loads.
-    placeholderData: () =>
-      flattenPages(queryClient.getQueryData<ListData>(LIST_KEY)).find((row) => row.id === id),
+    // Opened from a list: show the row already in hand while the fresh copy loads. Any cached
+    // list will do — filtered or not, the row is the same.
+    placeholderData: () => {
+      for (const [, data] of queryClient.getQueriesData<ListData>({ queryKey: LIST_KEY })) {
+        const row = flattenPages(data).find((r) => r.id === id);
+        if (row) return row;
+      }
+      return undefined;
+    },
   });
 }
 

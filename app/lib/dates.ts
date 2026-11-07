@@ -173,3 +173,28 @@ export function currentMonth(now = new Date()): { from: IsoDate; to: IsoDate; la
     name: MONTHS_LONG[now.getMonth()],
   };
 }
+
+/** True for a real calendar date written as YYYY-MM-DD ("2026-02-30" is not one). */
+export function isIsoDate(value: unknown): value is IsoDate {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && toIsoDate(fromIsoDate(value)) === value;
+}
+
+/** Last calendar month on the phone, both ends inclusive. */
+export function lastMonthSpan(now = new Date()): { from: IsoDate; to: IsoDate } {
+  const { from, to } = monthSpan(shiftMonth(monthOf(now), -1));
+  return { from, to };
+}
+
+/** This calendar year on the phone, 1 January to 31 December. */
+export function thisYearSpan(now = new Date()): { from: IsoDate; to: IsoDate } {
+  return { from: toIsoDate(new Date(now.getFullYear(), 0, 1)), to: toIsoDate(new Date(now.getFullYear(), 11, 31)) };
+}
+
+/** "1 Oct – 15 Nov" this year, "1 Oct 2025 – 15 Jan 2026" otherwise; one day is just that day. */
+export function rangeLabel(from: IsoDate, to: IsoDate, now = new Date()): string {
+  const a = fromIsoDate(from);
+  const b = fromIsoDate(to);
+  const year = now.getFullYear();
+  const withYear = (d: Date) => (a.getFullYear() === year && b.getFullYear() === year ? dayMonth(d) : `${dayMonth(d)} ${d.getFullYear()}`);
+  return from === to ? withYear(a) : `${withYear(a)} – ${withYear(b)}`;
+}

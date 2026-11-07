@@ -1,12 +1,22 @@
 import { apiRequest } from '@/api/client';
+import type { TransactionFilters } from '@/lib/transactionFilters';
 import type { PagedResponse, TransactionRequest, TransactionResponse } from '@/types/api';
 
 export const TRANSACTIONS_PAGE_SIZE = 20;
 
-/** Newest first, offset paging (D-024). */
-export function listTransactions(page: number, pageSize = TRANSACTIONS_PAGE_SIZE) {
+/** Newest first, offset paging (D-024), narrowed by the filters (D-040). */
+export function listTransactions(page: number, filters: TransactionFilters = {}, pageSize = TRANSACTIONS_PAGE_SIZE) {
   return apiRequest<PagedResponse<TransactionResponse>>('/transactions', {
-    query: { page, pageSize },
+    query: {
+      page,
+      pageSize,
+      type: filters.type,
+      from: filters.from,
+      to: filters.to,
+      categoryId: filters.categoryId,
+      uncategorised: filters.uncategorised ? 'true' : undefined,
+      currency: filters.currency,
+    },
   });
 }
 

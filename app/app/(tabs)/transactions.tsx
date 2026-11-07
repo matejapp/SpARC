@@ -1,8 +1,9 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, type ReactNode } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ActivityFilters } from '@/components/ActivityFilters';
 import { BrandArc } from '@/components/BrandArc';
 import { BackIcon } from '@/components/icons';
 import { TransactionRow } from '@/components/TransactionRow';
@@ -11,6 +12,7 @@ import { RowsSkeleton } from '@/components/ui/Skeleton';
 import { flattenPages, useTransactionList } from '@/hooks/useTransactions';
 import { dayHeading } from '@/lib/dates';
 import { makeStyles, radii, spacing, tabularNums, type, useTheme } from '@/lib/theme';
+import { hasAnyFilter, parseFilters, toParams, type TransactionFilters } from '@/lib/transactionFilters';
 import type { TransactionResponse } from '@/types/api';
 
 type Day = { date: string; items: TransactionResponse[] };
@@ -28,11 +30,22 @@ function byDay(rows: TransactionResponse[]): Day[] {
 
 // The Activity tab (board → Transactions): every transaction, grouped by day, in cards.
 // FlatList renders only what is near the screen, so a long history stays cheap to scroll.
+//
+// The filters live in the route's search params — the `?type=expense&currency=EUR` part of the
+// screen's URL, which expo-router keeps for every screen like a web address. Reading them with
+// useLocalSearchParams and writing them with router.setParams (instead of useState) means the
+// filters survive leaving the tab and coming back, and a link can open Activity pre-filtered.
+// setParams re-renders this screen with the new params; nothing is pushed onto the back stack.
 export default function TransactionsScreen() {
   const styles = useStyles();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const list = useTransactionList();
+  const params = useLocalSearchParams();
+  const filters = useMemo(() => parseFilters(params), [params]);
+  const filtered = hasAnyFilter(filters);
+  const setFilters = (next: TransactionFilters) => router.setParams(toParams(next));
+  // One cache entry per combination; switching back to one already seen shows it at once.
+  const list = useTransactionList(filters);
   const days = useMemo(() => byDay(flattenPages(list.data)), [list.data]);
   const total = list.data?.pages[0]?.totalCount;
 
@@ -51,7 +64,9 @@ export default function TransactionsScreen() {
           Transactions
         </Text>
         {total !== undefined && total > 0 ? (
-          <Text style={styles.subtitle}>{total} total · newest first</Text>
+          <Text style={styles.subtitle}>
+            {total} {filtered ? 'matching' : 'total'} · newest first
+          </Text>
         ) : null}
       </View>
     </View>
@@ -74,6 +89,14 @@ export default function TransactionsScreen() {
         <Button label="Try again" variant="secondary" onPress={() => list.refetch()} />
       </View>
     );
+  } else if (days.length === 0 && filtered) {
+    body = (
+      <View style={[styles.card, styles.state, styles.message]}>
+        <Text style={styles.messageTitle}>Nothing matches these filters</Text>
+        <Text style={styles.messageText}>Try a wider period, or clear the filters to see everything.</Text>
+        <Button label="Clear all filters" variant="secondary" onPress={() => setFilters({})} />
+      </View>
+    );
   } else if (days.length === 0) {
     body = (
       <View style={[styles.card, styles.state, styles.message]}>
@@ -94,6 +117,7 @@ export default function TransactionsScreen() {
         <>
           <BrandArc />
           {header}
+          <ActivityFilters filters={filters} onChange={setFilters} />
           {body}
         </>
       }
