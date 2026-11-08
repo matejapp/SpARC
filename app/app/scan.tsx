@@ -11,6 +11,7 @@ import { ErrorBanner } from '@/components/ui/Banner';
 import { Button } from '@/components/ui/Button';
 import { useReceiptDraft, useReceiptPhotoDraft } from '@/hooks/useReceipts';
 import { formatAmount } from '@/lib/money';
+import { shrinkForUpload } from '@/lib/receiptPhoto';
 import { makeStyles, radii, spacing, type, useTheme } from '@/lib/theme';
 import type { ReceiptDraftResponse } from '@/types/api';
 
@@ -68,10 +69,10 @@ export default function ScanScreen() {
     if (!camera.current || capturing) return;
     setCapturing(true);
     try {
-      // 0.7 keeps a 12 MP receipt photo at a few MB, well under the API's 10 MB.
-      const picture = await camera.current.takePictureAsync({ quality: 0.7, exif: false });
+      const picture = await camera.current.takePictureAsync({ quality: 0.9, exif: false });
       setTorch(false);
-      setPhoto(picture.uri);
+      // Shrunk before it's shown, so the preview is exactly what gets uploaded.
+      setPhoto(await shrinkForUpload(picture.uri, picture.width, picture.height));
     } catch {
       setLocalError("The photo couldn't be taken. Try again.");
     } finally {
