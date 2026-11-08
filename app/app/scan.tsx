@@ -260,6 +260,7 @@ function draftParams(d: ReceiptDraftResponse, source: Mode): Record<string, stri
   if (d.locationName) params.location = d.locationName;
   if (d.receiptNumber) params.receiptNumber = d.receiptNumber;
   if (d.existingTransactionId) params.existingId = d.existingTransactionId;
+  if (d.suggestedCategoryId) params.categoryId = d.suggestedCategoryId;
   return params;
 }
 

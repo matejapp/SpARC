@@ -23,6 +23,7 @@ type Params = {
   location?: string;
   receiptNumber?: string;
   existingId?: string;
+  categoryId?: string; // suggested by the API (D-049); the user can change it
 };
 
 type Receipt = {
@@ -30,6 +31,7 @@ type Receipt = {
   fromPhoto: boolean;
   missingAmount: boolean;
   missingDate: boolean;
+  suggested: boolean;
   store: string | null;
   number: string | null;
   existingId: string | null;
@@ -116,16 +118,21 @@ function readReceipt(p: Params): Receipt | null {
   // Each stands in for the other when the record gave only one.
   const store = shortText(p.store);
   const location = shortText(p.location);
+  const suggestedId = typeof p.categoryId === 'string' && UUID.test(p.categoryId) ? p.categoryId : null;
   return {
     draft: {
       ...emptyDraft('expense'),
       amountText: amount ?? '',
       ...(occurredOn ? { occurredOn } : {}),
       description: location ?? store ?? '',
+      // Only a suggestion: pre-selected, and the API checks it is one of the user's categories
+      // on save like any other choice.
+      categoryId: suggestedId,
     },
     fromPhoto: p.source === 'photo',
     missingAmount: amount === null,
     missingDate: occurredOn === null,
+    suggested: suggestedId !== null,
     store: store ?? location,
     number: isReceiptNumber(p.receiptNumber) ? p.receiptNumber : null,
     existingId: typeof p.existingId === 'string' && UUID.test(p.existingId) ? p.existingId : null,
@@ -134,12 +141,13 @@ function readReceipt(p: Params): Receipt | null {
 
 /** What to check, most important first: what the scan couldn't read, then the rest. */
 function receiptHint(r: Receipt): string {
+  const category = r.suggested ? 'check the suggested category' : 'pick a category';
   if (r.missingAmount && r.missingDate) return "The total and date couldn't be read. Enter the total and check the date.";
-  if (r.missingAmount) return "The total couldn't be read. Enter it, then pick a category.";
-  if (r.missingDate) return "The date couldn't be read, so it's set to today. Check it, then pick a category.";
-  if (r.fromPhoto) return 'Read from a photo, so check the amount and date, then pick a category.';
+  if (r.missingAmount) return `The total couldn't be read. Enter it, then ${category}.`;
+  if (r.missingDate) return `The date couldn't be read, so it's set to today. Check it, then ${category}.`;
+  if (r.fromPhoto) return `Read from a photo, so check the amount and date, then ${category}.`;
   if (!r.store) return "The store's name wasn't available. Pick a category, and add a description if you like.";
-  return 'Check the amount and date, then pick a category.';
+  return `Check the amount and date, then ${category}.`;
 }
 
 function shortText(value: unknown): string | null {
