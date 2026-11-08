@@ -5,6 +5,9 @@ import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnalyticsCard } from '@/components/analytics/AnalyticsCard';
+import { CategoriesCard } from '@/components/analytics/CategoriesCard';
+import { CategoryMonthsCard } from '@/components/analytics/CategoryMonthsCard';
+import { DailyCard } from '@/components/analytics/DailyCard';
 import { EmptyPeriod } from '@/components/analytics/EmptyPeriod';
 import { HeadlineCard } from '@/components/analytics/HeadlineCard';
 import { PaceCard } from '@/components/analytics/PaceCard';
@@ -14,10 +17,24 @@ import { BrandArc } from '@/components/BrandArc';
 import { ChevronIcon } from '@/components/icons';
 import { ErrorBanner } from '@/components/ui/Banner';
 import { Button } from '@/components/ui/Button';
-import { useAnalyticsPace, useAnalyticsSummary, useAnalyticsTrend } from '@/hooks/useAnalytics';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import {
+  useAnalyticsCategories,
+  useAnalyticsCategoryMonths,
+  useAnalyticsDaily,
+  useAnalyticsPace,
+  useAnalyticsSummary,
+  useAnalyticsTrend,
+} from '@/hooks/useAnalytics';
 import { useMe } from '@/hooks/useMe';
 import { chartMonths, periodAt, type PeriodKind } from '@/lib/periods';
 import { makeStyles, radii, spacing, type, useTheme } from '@/lib/theme';
+import type { TransactionType } from '@/types/api';
+
+const TYPE_OPTIONS = [
+  { value: 'expense', label: 'Expense' },
+  { value: 'income', label: 'Income' },
+] as const satisfies readonly { value: TransactionType; label: string }[];
 
 // The Analytics tab (F-04.3 – F-04.5, F-04.8 – F-04.14; board → Analytics tab). Every amount
 // is in the display currency, which the chip in the header shows and opens in settings. Each
@@ -39,6 +56,9 @@ export default function AnalyticsScreen() {
   // below only read them.
   const summary = useAnalyticsSummary(period);
   const trend = useAnalyticsTrend(months);
+  const [categoryType, setCategoryType] = useState<TransactionType>('expense');
+  const categories = useAnalyticsCategories(period, categoryType);
+  const categoryMonths = useAnalyticsCategoryMonths(months);
   const empty = summary.data !== undefined && summary.data.current.income === 0 && summary.data.current.expense === 0;
 
   const [refreshing, setRefreshing] = useState(false);
@@ -113,6 +133,27 @@ export default function AnalyticsScreen() {
           </AnalyticsCard>
 
           {period.month ? <PaceSection month={period.month} /> : null}
+
+          <AnalyticsCard
+            title="By category"
+            action={
+              <View style={styles.typeSwitch}>
+                <SegmentedControl label="Type" options={TYPE_OPTIONS} value={categoryType} onChange={setCategoryType} />
+              </View>
+            }
+            query={categories}
+            skeletonHeight={320}
+          >
+            {(data) => <CategoriesCard data={data} period={period} />}
+          </AnalyticsCard>
+
+          <AnalyticsCard title="Categories over time" aside="Top 5 and other" query={categoryMonths} skeletonHeight={300}>
+            {(data) => <CategoryMonthsCard data={data} />}
+          </AnalyticsCard>
+
+          {period.month ? (
+            <DailySection month={period.month} averagePerDay={summary.data?.current.averageDailySpend ?? null} />
+          ) : null}
         </>
       )}
     </ScrollView>
@@ -124,6 +165,14 @@ function PaceSection({ month }: { month: string }) {
   return (
     <AnalyticsCard title="Spending pace" query={useAnalyticsPace(month)}>
       {(pace) => <PaceCard pace={pace} />}
+    </AnalyticsCard>
+  );
+}
+
+function DailySection({ month, averagePerDay }: { month: string; averagePerDay: number | null }) {
+  return (
+    <AnalyticsCard title="Daily spending" query={useAnalyticsDaily(month)} skeletonHeight={170}>
+      {(daily) => <DailyCard data={daily} averagePerDay={averagePerDay} />}
     </AnalyticsCard>
   );
 }
@@ -148,4 +197,5 @@ const useStyles = makeStyles((t) => ({
   headlineState: { borderRadius: radii.card, backgroundColor: t.colors.surface, boxShadow: t.shadows.card, padding: 20, gap: 12 },
   headlineSkeleton: { height: 230 },
   retry: { alignSelf: 'flex-start' },
+  typeSwitch: { width: 200 },
 }));
