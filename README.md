@@ -257,7 +257,7 @@ not built yet.
 | | `PUT /api/v1/users/me` | `{ preferredCurrency }`, the display currency |
 | Categories | `GET /api/v1/categories?kind=`, `POST /api/v1/categories`, `DELETE /api/v1/categories/{id}` | system set + own; delete own only |
 | Transactions | `GET /api/v1/transactions?type=&from=&to=&categoryId=&uncategorised=&currency=&page=&pageSize=` | paged, newest first; every filter optional, combined with AND |
-| | `POST /api/v1/transactions` | |
+| | `POST /api/v1/transactions` | optional `fiscalReceiptNumber` from a receipt draft; 409 if that receipt is already entered |
 | | `GET`, `PUT`, `DELETE /api/v1/transactions/{id}` | |
 | Dashboard | `GET /api/v1/dashboard/summary?from=&to=` | income, expense, difference, in the preferred currency |
 | Analytics | `GET /api/v1/analytics/summary?from=&to=` | income, expense, net, savings rate, average daily spend; with the period before |

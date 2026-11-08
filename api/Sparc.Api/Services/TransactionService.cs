@@ -50,8 +50,14 @@ public sealed class TransactionService(
     public async Task<TransactionResponse> CreateAsync(Guid userId, TransactionRequest request)
     {
         var category = await ValidateAsync(userId, request);
+        await ValidateReceiptAsync(userId, request);
 
-        var transaction = new Transaction { UserId = userId, Currency = Currencies.Rsd };
+        var transaction = new Transaction
+        {
+            UserId = userId,
+            Currency = Currencies.Rsd,
+            FiscalReceiptNumber = request.FiscalReceiptNumber,
+        };
         Apply(transaction, request);
         await FreezeRateAsync(transaction);
 
@@ -72,6 +78,12 @@ public sealed class TransactionService(
         {
             throw new DomainValidationException(nameof(TransactionRequest.Type),
                 "A paid bill's expense can't be changed to income.");
+        }
+        // So does a scanned receipt's (D-047). Its receipt number is never rewritten here.
+        if (transaction.FiscalReceiptNumber is not null && request.Type != TransactionType.Expense)
+        {
+            throw new DomainValidationException(nameof(TransactionRequest.Type),
+                "A scanned receipt's expense can't be changed to income.");
         }
 
         await ValidateAsync(userId, request);
@@ -130,6 +142,26 @@ public sealed class TransactionService(
         return category;
     }
 
+    /// <summary>
+    /// A receipt number belongs to an expense and to one transaction per user (D-047). The unique
+    /// index catches a concurrent double confirm; this check gives the usual case a clear answer.
+    /// </summary>
+    private async Task ValidateReceiptAsync(Guid userId, TransactionRequest request)
+    {
+        if (request.FiscalReceiptNumber is not { } number)
+        {
+            return;
+        }
+        if (request.Type != TransactionType.Expense)
+        {
+            throw new DomainValidationException(nameof(TransactionRequest.Type), "A receipt is always an expense.");
+        }
+        if (await transactions.FindIdByFiscalReceiptNumberAsync(userId, number) is not null)
+        {
+            throw new ConflictException("This receipt is already in your activity.");
+        }
+    }
+
     private static void Apply(Transaction transaction, TransactionRequest request)
     {
         transaction.Type = request.Type!.Value;
@@ -171,6 +203,7 @@ public sealed class TransactionService(
         CategoryName = category?.Name,
         OccurredOn = transaction.OccurredOn,
         Description = transaction.Description,
+        FiscalReceiptNumber = transaction.FiscalReceiptNumber,
         CreatedAt = transaction.CreatedAt,
         UpdatedAt = transaction.UpdatedAt,
     };

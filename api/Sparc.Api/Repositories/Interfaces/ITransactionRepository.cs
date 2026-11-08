@@ -51,4 +51,6 @@ public interface ITransactionRepository
     /// </summary>
     Task DeleteAsync(Transaction transaction);
 
+    /// <summary>The id of the user's transaction with this fiscal receipt number, if any (D-047).</summary>
+    Task<Guid?> FindIdByFiscalReceiptNumberAsync(Guid userId, string fiscalReceiptNumber);
 }

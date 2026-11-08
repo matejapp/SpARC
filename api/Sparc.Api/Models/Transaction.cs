@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Sparc.Api.Common;
 
 namespace Sparc.Api.Models;
 
@@ -8,6 +9,9 @@ namespace Sparc.Api.Models;
 [Index(nameof(UserId), nameof(CategoryId))]
 // Postgres treats NULLs as distinct, so a plain unique index already means "unique where not null".
 [Index(nameof(BillOccurrenceId), IsUnique = true)]
+// One fiscal receipt is one expense per user (D-047). NULLs are distinct, so hand-entered rows
+// never collide.
+[Index(nameof(UserId), nameof(FiscalReceiptNumber), IsUnique = true)]
 public class Transaction : ITimestamped
 {
     public Guid Id { get; set; }
@@ -55,6 +59,13 @@ public class Transaction : ITimestamped
     /// </summary>
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public BillOccurrence? BillOccurrence { get; set; }
+
+    /// <summary>
+    /// Set when this expense was confirmed from a scanned fiscal receipt: the receipt's own
+    /// number, "requestedBy-signedBy-counter". Set on create only, never changed (D-047).
+    /// </summary>
+    [MaxLength(FiscalReceiptNumbers.MaxLength)]
+    public string? FiscalReceiptNumber { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

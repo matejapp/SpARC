@@ -35,7 +35,7 @@ public sealed partial class PursReceiptLookup(HttpClient http, ILogger<PursRecei
     [GeneratedRegex(@"\s+")]
     private static partial Regex Whitespace();
 
-    [GeneratedRegex("^[A-Z0-9]{8}-[A-Z0-9]{8}-[0-9]{1,10}$")]
+    [GeneratedRegex(Common.FiscalReceiptNumbers.Pattern)]
     private static partial Regex ReceiptNumber();
 
     public async Task<FiscalReceiptRecord?> FindAsync(string vl, CancellationToken cancellationToken)

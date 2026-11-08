@@ -80,4 +80,11 @@ public sealed class TransactionRepository(SparcDbContext db) : ITransactionRepos
         db.Transactions.Remove(transaction);
         await db.SaveChangesAsync();
     }
+
+    // Served by IX_Transactions_UserId_FiscalReceiptNumber.
+    public async Task<Guid?> FindIdByFiscalReceiptNumberAsync(Guid userId, string fiscalReceiptNumber) =>
+        await db.Transactions.AsNoTracking()
+            .Where(t => t.UserId == userId && t.FiscalReceiptNumber == fiscalReceiptNumber)
+            .Select(t => (Guid?)t.Id)
+            .FirstOrDefaultAsync();
 }

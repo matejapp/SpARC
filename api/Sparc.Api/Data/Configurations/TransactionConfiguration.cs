@@ -27,6 +27,12 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
                 "\"AmountRsd\" = round(\"Amount\" * \"RateToRsd\", 2)");
             table.HasCheckConstraint("CK_Transactions_Rsd_RateIsOne",
                 $"\"Currency\" <> '{Currencies.Rsd}' OR \"RateToRsd\" = 1");
+
+            // A receipt number is a receipt number (D-047), and only a purchase has one.
+            table.HasCheckConstraint("CK_Transactions_FiscalReceiptNumber_Format",
+                $"\"FiscalReceiptNumber\" IS NULL OR \"FiscalReceiptNumber\" ~ '{FiscalReceiptNumbers.Pattern}'");
+            table.HasCheckConstraint("CK_Transactions_FiscalReceiptNumber_Expense",
+                $"\"FiscalReceiptNumber\" IS NULL OR \"Type\" = {(short)TransactionType.Expense}");
         });
     }
 }

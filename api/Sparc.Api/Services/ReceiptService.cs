@@ -1,5 +1,6 @@
 using Sparc.Api.Common;
 using Sparc.Api.Dto;
+using Sparc.Api.Repositories.Interfaces;
 using Sparc.Api.Services.Interfaces;
 
 namespace Sparc.Api.Services;
@@ -11,6 +12,7 @@ namespace Sparc.Api.Services;
 /// </summary>
 public sealed class ReceiptService(
     IFiscalReceiptLookup lookup,
+    ITransactionRepository transactions,
     FiscalReceiptOptions options,
     ILogger<ReceiptService> logger) : IReceiptService
 {
@@ -47,8 +49,12 @@ public sealed class ReceiptService(
             logger.LogWarning("Decoded receipt total differs from its record for {UserId}", userId);
         }
 
-        logger.LogInformation("Receipt draft for {UserId}: decoded {Decoded}, store {HasStore}",
-            userId, code.Total is not null, record?.StoreName is not null);
+        var number = code.ReceiptNumber ?? record?.ReceiptNumber;
+        // Already entered: the draft still comes back, so the app can say so and link to it (D-047).
+        var existing = number is null ? null : await transactions.FindIdByFiscalReceiptNumberAsync(userId, number);
+
+        logger.LogInformation("Receipt draft for {UserId}: decoded {Decoded}, store {HasStore}, existing {Existing}",
+            userId, code.Total is not null, record?.StoreName is not null, existing is not null);
 
         return new ReceiptDraftResponse
         {
@@ -56,9 +62,9 @@ public sealed class ReceiptService(
             Amount = total.Value,
             Currency = Currencies.Rsd,
             StoreName = record?.StoreName,
-            ReceiptNumber = code.ReceiptNumber ?? record?.ReceiptNumber,
+            ReceiptNumber = number,
             SuggestedCategoryId = null,
-            ExistingTransactionId = null,
+            ExistingTransactionId = existing,
         };
     }
 }

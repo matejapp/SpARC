@@ -17,6 +17,9 @@ public sealed class TransactionResponse
 
     public required DateOnly OccurredOn { get; init; }
     public required string? Description { get; init; }
+
+    /// <summary>Set when the transaction was confirmed from a scanned receipt (D-047).</summary>
+    public required string? FiscalReceiptNumber { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required DateTime UpdatedAt { get; init; }
 }

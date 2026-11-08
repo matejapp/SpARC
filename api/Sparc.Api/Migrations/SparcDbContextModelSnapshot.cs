@@ -578,6 +578,10 @@ namespace Sparc.Api.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("FiscalReceiptNumber")
+                        .HasMaxLength(28)
+                        .HasColumnType("character varying(28)");
+
                     b.Property<DateOnly>("OccurredOn")
                         .HasColumnType("date");
 
@@ -603,6 +607,9 @@ namespace Sparc.Api.Migrations
 
                     b.HasIndex("UserId", "CategoryId");
 
+                    b.HasIndex("UserId", "FiscalReceiptNumber")
+                        .IsUnique();
+
                     b.HasIndex("UserId", "OccurredOn")
                         .IsDescending(false, true);
 
@@ -615,6 +622,10 @@ namespace Sparc.Api.Migrations
                             t.HasCheckConstraint("CK_Transactions_Amount_Positive", "\"Amount\" > 0");
 
                             t.HasCheckConstraint("CK_Transactions_Currency", "\"Currency\" IN ('RSD', 'EUR', 'USD')");
+
+                            t.HasCheckConstraint("CK_Transactions_FiscalReceiptNumber_Expense", "\"FiscalReceiptNumber\" IS NULL OR \"Type\" = 1");
+
+                            t.HasCheckConstraint("CK_Transactions_FiscalReceiptNumber_Format", "\"FiscalReceiptNumber\" IS NULL OR \"FiscalReceiptNumber\" ~ '^[A-Z0-9]{8}-[A-Z0-9]{8}-[0-9]{1,10}$'");
 
                             t.HasCheckConstraint("CK_Transactions_RateToRsd_Positive", "\"RateToRsd\" > 0");
 

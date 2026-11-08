@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Sparc.Api.Common;
 using Sparc.Api.Models;
 using Sparc.Api.Validators;
 
@@ -32,4 +33,12 @@ public sealed class TransactionRequest
 
     [StringLength(500)]
     public string? Description { get; init; }
+
+    /// <summary>
+    /// The receipt number from a scan's draft (D-047), so the same receipt can't be entered
+    /// twice. Read on create only; an update leaves a transaction's receipt number as it was.
+    /// </summary>
+    [StringLength(FiscalReceiptNumbers.MaxLength)]
+    [RegularExpression(FiscalReceiptNumbers.Pattern, ErrorMessage = "This isn't a fiscal receipt number.")]
+    public string? FiscalReceiptNumber { get; init; }
 }
