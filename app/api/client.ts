@@ -28,8 +28,16 @@ type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;
   query?: Record<string, string | number | undefined>;
+  /**
+   * A multipart body instead of JSON (a receipt photo). fetch sets the Content-Type with its
+   * boundary itself. React Native reads a file part from its uri on every send, so the one
+   * retry after a refresh sends the file again.
+   */
+  form?: FormData;
   /** false for the anonymous auth endpoints. */
   auth?: boolean;
+  /** Longer than the default for work that takes seconds on the server (OCR). */
+  timeoutMs?: number;
 };
 
 /** Request under /api/v1 (D-023). Signed-in requests refresh once on a 401, then sign out. */
@@ -102,13 +110,13 @@ async function send<T>(path: string, options: RequestOptions, token: string | nu
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? TIMEOUT_MS);
   let response: Response;
   try {
     response = await fetch(url, {
       method: options.method ?? 'GET',
       headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: options.form ?? (options.body === undefined ? undefined : JSON.stringify(options.body)),
       signal: controller.signal,
     });
   } catch {

@@ -227,8 +227,9 @@ export type AnalyticsCurrenciesResponse = {
 
 /** POST /receipts/qr: what a scanned fiscal receipt suggests. Nothing is saved (D-045). */
 export type ReceiptDraftResponse = {
-  occurredOn: IsoDate;
-  amount: number;
+  /** Always set from a QR code; null when a photo didn't show it legibly (D-048). */
+  occurredOn: IsoDate | null;
+  amount: number | null;
   currency: 'RSD';
   /** The company that issued it, e.g. "DELHAIZE SERBIA DOO". */
   storeName: string | null;

@@ -13,8 +13,10 @@ import { makeStyles, type } from '@/lib/theme';
 
 type Params = {
   type?: string;
-  // From the scan screen (D-045). Route params can also come from a link, so each is checked.
+  // From the scan screen (D-045, D-048). Route params can also come from a link, so each is
+  // checked.
   receipt?: string;
+  source?: string; // 'qr' or 'photo'
   amount?: string;
   occurredOn?: string;
   store?: string;
@@ -25,6 +27,9 @@ type Params = {
 
 type Receipt = {
   draft: TransactionDraft;
+  fromPhoto: boolean;
+  missingAmount: boolean;
+  missingDate: boolean;
   store: string | null;
   number: string | null;
   existingId: string | null;
@@ -54,13 +59,10 @@ export default function AddTransactionScreen() {
           {receipt ? (
             <View style={styles.receipt}>
               <Text style={styles.note}>
-                {receipt.store ? `From a receipt · ${receipt.store}` : 'From a receipt'}
+                {(receipt.fromPhoto ? 'From a photo' : 'From a receipt') +
+                  (receipt.store ? ` · ${receipt.store}` : '')}
               </Text>
-              <Text style={styles.noteQuiet}>
-                {receipt.store
-                  ? 'Check the amount and date, then pick a category.'
-                  : "The store's name wasn't available. Pick a category, and add a description if you like."}
-              </Text>
+              <Text style={styles.noteQuiet}>{receiptHint(receipt)}</Text>
               {receipt.existingId ? (
                 <View style={styles.existing}>
                   <ErrorBanner message="This receipt is already in your activity." />
@@ -100,12 +102,15 @@ export default function AddTransactionScreen() {
 }
 
 /**
- * The scan's draft, or null when this isn't one. Amount and date must read, or the whole draft
- * is ignored and the form starts empty; the optional parts are dropped one by one if they don't.
+ * The scan's draft, or null when this isn't one. Each part is checked and dropped on its own if
+ * it doesn't read. A QR draft always has amount and date; a photo may lack either, and the form
+ * leaves the amount empty and the date on today for the user to fix — never a guess.
  */
 function readReceipt(p: Params): Receipt | null {
-  if (p.receipt !== '1' || typeof p.amount !== 'string' || !isIsoDate(p.occurredOn)) return null;
-  if (!parseAmount(p.amount).ok) return null;
+  if (p.receipt !== '1') return null;
+  const amount = typeof p.amount === 'string' && parseAmount(p.amount).ok ? p.amount : null;
+  const occurredOn = isIsoDate(p.occurredOn) ? p.occurredOn : null;
+  if (amount === null && occurredOn === null) return null;
 
   // The company names the receipt; the shop or till it came from goes in the description.
   // Each stands in for the other when the record gave only one.
@@ -114,14 +119,27 @@ function readReceipt(p: Params): Receipt | null {
   return {
     draft: {
       ...emptyDraft('expense'),
-      amountText: p.amount,
-      occurredOn: p.occurredOn,
+      amountText: amount ?? '',
+      ...(occurredOn ? { occurredOn } : {}),
       description: location ?? store ?? '',
     },
+    fromPhoto: p.source === 'photo',
+    missingAmount: amount === null,
+    missingDate: occurredOn === null,
     store: store ?? location,
     number: isReceiptNumber(p.receiptNumber) ? p.receiptNumber : null,
     existingId: typeof p.existingId === 'string' && UUID.test(p.existingId) ? p.existingId : null,
   };
+}
+
+/** What to check, most important first: what the scan couldn't read, then the rest. */
+function receiptHint(r: Receipt): string {
+  if (r.missingAmount && r.missingDate) return "The total and date couldn't be read. Enter the total and check the date.";
+  if (r.missingAmount) return "The total couldn't be read. Enter it, then pick a category.";
+  if (r.missingDate) return "The date couldn't be read, so it's set to today. Check it, then pick a category.";
+  if (r.fromPhoto) return 'Read from a photo, so check the amount and date, then pick a category.';
+  if (!r.store) return "The store's name wasn't available. Pick a category, and add a description if you like.";
+  return 'Check the amount and date, then pick a category.';
 }
 
 function shortText(value: unknown): string | null {
