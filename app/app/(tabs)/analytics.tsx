@@ -5,8 +5,10 @@ import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnalyticsCard } from '@/components/analytics/AnalyticsCard';
+import { BillsCard } from '@/components/analytics/BillsCard';
 import { CategoriesCard } from '@/components/analytics/CategoriesCard';
 import { CategoryMonthsCard } from '@/components/analytics/CategoryMonthsCard';
+import { CurrenciesCard } from '@/components/analytics/CurrenciesCard';
 import { DailyCard } from '@/components/analytics/DailyCard';
 import { EmptyPeriod } from '@/components/analytics/EmptyPeriod';
 import { HeadlineCard } from '@/components/analytics/HeadlineCard';
@@ -19,8 +21,10 @@ import { ErrorBanner } from '@/components/ui/Banner';
 import { Button } from '@/components/ui/Button';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import {
+  useAnalyticsBills,
   useAnalyticsCategories,
   useAnalyticsCategoryMonths,
+  useAnalyticsCurrencies,
   useAnalyticsDaily,
   useAnalyticsPace,
   useAnalyticsSummary,
@@ -59,6 +63,8 @@ export default function AnalyticsScreen() {
   const [categoryType, setCategoryType] = useState<TransactionType>('expense');
   const categories = useAnalyticsCategories(period, categoryType);
   const categoryMonths = useAnalyticsCategoryMonths(months);
+  const bills = useAnalyticsBills(period);
+  const currencies = useAnalyticsCurrencies(period, 'expense');
   const empty = summary.data !== undefined && summary.data.current.income === 0 && summary.data.current.expense === 0;
 
   const [refreshing, setRefreshing] = useState(false);
@@ -154,6 +160,14 @@ export default function AnalyticsScreen() {
           {period.month ? (
             <DailySection month={period.month} averagePerDay={summary.data?.current.averageDailySpend ?? null} />
           ) : null}
+
+          <AnalyticsCard title="Bills" query={bills} skeletonHeight={170}>
+            {(data) => <BillsCard data={data} />}
+          </AnalyticsCard>
+
+          <AnalyticsCard title="Entered in" aside="Spending by entry currency" query={currencies} skeletonHeight={140}>
+            {(data) => <CurrenciesCard data={data} />}
+          </AnalyticsCard>
         </>
       )}
     </ScrollView>
