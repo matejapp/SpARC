@@ -76,7 +76,7 @@ const accent: Gradient = {
 const mark = ['#FFB088', '#FF9461', '#E8743D'] as const; // the logo arc, as in assets/brand/sparc-mark.svg
 
 // Contrast: text ≥ 6.6:1 on its surfaces, white on primary 4.5:1, midnight on cantaloupe
-// ≥ 5.4:1, category icon on tint ≥ 6.1:1.
+// ≥ 5.4:1, category icon on tint ≥ 4.5:1.
 export const dark: Palette = {
   scheme: 'dark',
   colors: {
@@ -127,17 +127,19 @@ export const dark: Palette = {
   },
   tabBarBackground: 'rgba(14,18,27,0.94)',
   arcOpacity: 0.16,
+  // Expense tones (D-046): one hue per category, lightness alternating so that neighbours on the
+  // hue circle differ in lightness too. Worst pair ΔE 13.3 (OKLab ×100), icon on tint ≥ 4.5:1.
   categoryTones: {
-    Groceries: { tint: '#0F2A31', ink: '#5CC8E0' },
-    'Dining out': { tint: '#33240F', ink: '#F2B25C' },
-    Housing: { tint: '#2E2119', ink: '#D69A72' },
-    Utilities: { tint: '#2F2A0E', ink: '#E8CB4A' },
-    Transport: { tint: '#142340', ink: '#7FA8F5' },
-    Health: { tint: '#3A1520', ink: '#F27B97' },
-    Entertainment: { tint: '#251C3D', ink: '#B49AF0' },
-    Shopping: { tint: '#36152B', ink: '#EA80C2' },
-    Subscriptions: { tint: '#1B1F3F', ink: '#9AA4F2' },
-    Education: { tint: '#1E2430', ink: '#A9B6CC' },
+    Groceries: { tint: '#19230B', ink: '#96D629' },
+    'Dining out': { tint: '#30180A', ink: '#FF7F1C' },
+    Housing: { tint: '#112034', ink: '#2886FF' },
+    Utilities: { tint: '#281E03', ink: '#F1BC00' },
+    Transport: { tint: '#022330', ink: '#00BEF8' },
+    Health: { tint: '#321616', ink: '#ED4954' },
+    Entertainment: { tint: '#28182D', ink: '#C969E8' },
+    Shopping: { tint: '#2F1621', ink: '#FF92C2' },
+    Subscriptions: { tint: '#1E1B33', ink: '#B1A7FF' },
+    Education: { tint: '#092617', ink: '#00A969' },
     Salary: { tint: '#0F2A1E', ink: '#3DD68C' },
     Freelance: { tint: '#1A2A12', ink: '#8FD45E' },
     Gifts: { tint: '#26290F', ink: '#C2D84A' },
@@ -146,7 +148,7 @@ export const dark: Palette = {
 };
 
 // Contrast: ink text 16:1, links (deep cantaloupe) ≥ 4.8:1 on every light surface, ink on
-// cantaloupe ≥ 5.6:1, category icon on tint ≥ 4.3:1.
+// cantaloupe ≥ 5.6:1, category icon on tint ≥ 4.5:1.
 export const light: Palette = {
   scheme: 'light',
   colors: {
@@ -195,17 +197,19 @@ export const light: Palette = {
   },
   tabBarBackground: 'rgba(255,255,255,0.92)',
   arcOpacity: 0.22,
+  // Expense tones (D-046): one hue per category, lightness alternating so that neighbours on the
+  // hue circle differ in lightness too. Worst pair ΔE 13.1 (OKLab ×100), icon on tint ≥ 4.5:1.
   categoryTones: {
-    Groceries: { tint: '#E1EFF3', ink: '#1D7184' },
-    'Dining out': { tint: '#FBEEDB', ink: '#9A5B0E' },
-    Housing: { tint: '#F3E8E0', ink: '#875838' },
-    Utilities: { tint: '#FAF2D2', ink: '#7D6200' },
-    Transport: { tint: '#E4ECF8', ink: '#2E5C9A' },
-    Health: { tint: '#FAE6EA', ink: '#AE3752' },
-    Entertainment: { tint: '#EEE8F8', ink: '#6748A3' },
-    Shopping: { tint: '#F7E6F1', ink: '#9C3577' },
-    Subscriptions: { tint: '#E7E9F7', ink: '#434F9B' },
-    Education: { tint: '#E8EBF0', ink: '#4C5A72' },
+    Groceries: { tint: '#EBF4E2', ink: '#345000' },
+    'Dining out': { tint: '#FFECE1', ink: '#773500' },
+    Housing: { tint: '#E7F1FF', ink: '#004391' },
+    Utilities: { tint: '#F7F0DE', ink: '#886900' },
+    Transport: { tint: '#E0F4FE', ink: '#007195' },
+    Health: { tint: '#FFEBEA', ink: '#C31832' },
+    Entertainment: { tint: '#F7EBFC', ink: '#600077' },
+    Shopping: { tint: '#FFEAF2', ink: '#93005A' },
+    Subscriptions: { tint: '#EFEEFF', ink: '#6C4CD5' },
+    Education: { tint: '#E3F6EA', ink: '#007F4E' },
     Salary: { tint: '#E7F2EC', ink: '#2F7D57' },
     Freelance: { tint: '#E6F1DF', ink: '#44722A' },
     Gifts: { tint: '#EFF3DC', ink: '#58731C' },
