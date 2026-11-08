@@ -158,6 +158,7 @@ function draftParams(d: ReceiptDraftResponse): Record<string, string> {
     occurredOn: d.occurredOn,
   };
   if (d.storeName) params.store = d.storeName;
+  if (d.locationName) params.location = d.locationName;
   if (d.receiptNumber) params.receiptNumber = d.receiptNumber;
   if (d.existingTransactionId) params.existingId = d.existingTransactionId;
   return params;

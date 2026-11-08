@@ -230,7 +230,10 @@ export type ReceiptDraftResponse = {
   occurredOn: IsoDate;
   amount: number;
   currency: 'RSD';
+  /** The company that issued it, e.g. "DELHAIZE SERBIA DOO". */
   storeName: string | null;
+  /** The shop or till, e.g. "1043567-Maxi 155". */
+  locationName: string | null;
   receiptNumber: string | null;
   suggestedCategoryId: string | null;
   /** Set when this receipt is already one of the user's transactions (D-047). */

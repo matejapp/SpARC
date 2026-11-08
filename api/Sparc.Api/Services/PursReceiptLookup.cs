@@ -24,7 +24,8 @@ public sealed partial class PursReceiptLookup(HttpClient http, ILogger<PursRecei
     public const int MaxStoreNameLength = 100;
     private const int MaxDepth = 6;
 
-    private static readonly string[] StoreNameKeys = ["locationName", "shopName", "businessName", "companyName"];
+    private static readonly string[] CompanyKeys = ["businessName", "companyName"];
+    private static readonly string[] LocationKeys = ["locationName", "shopName"];
 
     [GeneratedRegex(@"^\d{9}$")]
     private static partial Regex TaxId();
@@ -117,22 +118,30 @@ public sealed partial class PursReceiptLookup(HttpClient http, ILogger<PursRecei
                 ? raw
                 : null;
 
-            string? store = null;
-            foreach (var key in StoreNameKeys)
+            var company = FirstText(root, CompanyKeys);
+            var location = FirstText(root, LocationKeys);
+            if ((company is null || location is null)
+                && Find(root, "journal", 0) is { ValueKind: JsonValueKind.String } journal)
             {
-                if (Find(root, key, 0) is { ValueKind: JsonValueKind.String } name && Clean(name.GetString()) is { } clean)
-                {
-                    store = clean;
-                    break;
-                }
-            }
-            if (store is null && Find(root, "journal", 0) is { ValueKind: JsonValueKind.String } journal)
-            {
-                store = StoreFromJournal(journal.GetString()!);
+                var (journalCompany, journalLocation) = NamesFromJournal(journal.GetString()!);
+                company ??= journalCompany;
+                location ??= journalLocation;
             }
 
-            return new FiscalReceiptRecord(isValid, store, total, issuedAt, number);
+            return new FiscalReceiptRecord(isValid, company, location, total, issuedAt, number);
         }
+    }
+
+    private static string? FirstText(JsonElement root, string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (Find(root, key, 0) is { ValueKind: JsonValueKind.String } value && Clean(value.GetString()) is { } clean)
+            {
+                return clean;
+            }
+        }
+        return null;
     }
 
     /// <summary>The first property named <paramref name="key"/> (any case), depth-first, bounded.</summary>
@@ -161,20 +170,19 @@ public sealed partial class PursReceiptLookup(HttpClient http, ILogger<PursRecei
 
     /// <summary>
     /// The printed receipt opens with the seller's tax id (PIB, nine digits) on a line of its own,
-    /// then the company name, then the shop's name. The shop's name is what a person recognises
-    /// ("Maxi 155"), so it wins when it has letters; otherwise the company.
+    /// then the company name, then the shop's location name.
     /// </summary>
-    internal static string? StoreFromJournal(string journal)
+    internal static (string? Company, string? Location) NamesFromJournal(string journal)
     {
         var lines = journal.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         var at = Array.FindIndex(lines, l => TaxId().IsMatch(l));
         if (at < 0)
         {
-            return null;
+            return (null, null);
         }
         var company = at + 1 < lines.Length ? Clean(lines[at + 1]) : null;
-        var shop = at + 2 < lines.Length ? Clean(lines[at + 2]) : null;
-        return shop is not null && Letter().IsMatch(shop) ? shop : company;
+        var location = at + 2 < lines.Length ? Clean(lines[at + 2]) : null;
+        return (company, location);
     }
 
     /// <summary>

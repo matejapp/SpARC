@@ -62,6 +62,7 @@ public sealed class ReceiptService(
             Amount = total.Value,
             Currency = Currencies.Rsd,
             StoreName = record?.StoreName,
+            LocationName = record?.LocationName,
             ReceiptNumber = number,
             SuggestedCategoryId = null,
             ExistingTransactionId = existing,

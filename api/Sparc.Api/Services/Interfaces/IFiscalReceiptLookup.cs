@@ -4,9 +4,12 @@ namespace Sparc.Api.Services.Interfaces;
 /// What the receipt's public record says. Every field nullable: the record's shape is read
 /// defensively until a real receipt confirms it (D-045).
 /// </summary>
+/// <param name="StoreName">The company that issued it, e.g. "DELHAIZE SERBIA DOO".</param>
+/// <param name="LocationName">The shop or till it was issued at, e.g. "1043567-Maxi 155".</param>
 public sealed record FiscalReceiptRecord(
     bool? IsValid,
     string? StoreName,
+    string? LocationName,
     decimal? Total,
     DateTime? IssuedAtUtc,
     string? ReceiptNumber);

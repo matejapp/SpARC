@@ -18,6 +18,7 @@ type Params = {
   amount?: string;
   occurredOn?: string;
   store?: string;
+  location?: string;
   receiptNumber?: string;
   existingId?: string;
 };
@@ -106,18 +107,25 @@ function readReceipt(p: Params): Receipt | null {
   if (p.receipt !== '1' || typeof p.amount !== 'string' || !isIsoDate(p.occurredOn)) return null;
   if (!parseAmount(p.amount).ok) return null;
 
-  const store = typeof p.store === 'string' ? p.store.trim().slice(0, MAX_STORE_LENGTH) || null : null;
+  // The company names the receipt; the shop or till it came from goes in the description.
+  // Each stands in for the other when the record gave only one.
+  const store = shortText(p.store);
+  const location = shortText(p.location);
   return {
     draft: {
       ...emptyDraft('expense'),
       amountText: p.amount,
       occurredOn: p.occurredOn,
-      description: store ?? '',
+      description: location ?? store ?? '',
     },
-    store,
+    store: store ?? location,
     number: isReceiptNumber(p.receiptNumber) ? p.receiptNumber : null,
     existingId: typeof p.existingId === 'string' && UUID.test(p.existingId) ? p.existingId : null,
   };
+}
+
+function shortText(value: unknown): string | null {
+  return typeof value === 'string' ? value.trim().slice(0, MAX_STORE_LENGTH) || null : null;
 }
 
 const useStyles = makeStyles((t) => ({

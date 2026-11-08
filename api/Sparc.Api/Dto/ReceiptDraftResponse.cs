@@ -14,8 +14,14 @@ public sealed class ReceiptDraftResponse
     /// <summary>Always RSD: fiscal receipts are issued in dinars.</summary>
     public required string Currency { get; init; }
 
-    /// <summary>Null when the public record didn't answer or didn't name the store.</summary>
+    /// <summary>
+    /// The company that issued the receipt, e.g. "DELHAIZE SERBIA DOO". Null when the public
+    /// record didn't answer or didn't name it.
+    /// </summary>
     public required string? StoreName { get; init; }
+
+    /// <summary>The shop or till it was issued at, e.g. "1043567-Maxi 155". Null as above.</summary>
+    public required string? LocationName { get; init; }
 
     /// <summary>Sent back with the create, so the same receipt can't be entered twice.</summary>
     public required string? ReceiptNumber { get; init; }
