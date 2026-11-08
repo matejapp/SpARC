@@ -49,6 +49,8 @@ export type TransactionRequest = {
   categoryId: string;
   occurredOn: IsoDate;
   description: string | null;
+  /** From a scanned receipt's draft, on create only, so the same receipt can't go in twice (D-047). */
+  fiscalReceiptNumber?: string | null;
 };
 
 export type TransactionResponse = {
@@ -62,6 +64,7 @@ export type TransactionResponse = {
   categoryName: string | null;
   occurredOn: IsoDate;
   description: string | null;
+  fiscalReceiptNumber: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -220,4 +223,16 @@ export type AnalyticsCurrenciesResponse = {
   currency: Currency;
   type: TransactionType;
   currencies: { entryCurrency: Currency; count: number; amount: number; total: number; share: number }[];
+};
+
+/** POST /receipts/qr: what a scanned fiscal receipt suggests. Nothing is saved (D-045). */
+export type ReceiptDraftResponse = {
+  occurredOn: IsoDate;
+  amount: number;
+  currency: 'RSD';
+  storeName: string | null;
+  receiptNumber: string | null;
+  suggestedCategoryId: string | null;
+  /** Set when this receipt is already one of the user's transactions (D-047). */
+  existingTransactionId: string | null;
 };

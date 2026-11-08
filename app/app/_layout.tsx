@@ -70,6 +70,7 @@ export default function RootLayout() {
           <Stack.Protected guard={signedIn} redirectTo="/login">
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="add" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
             <Stack.Screen name="settings" />
             <Stack.Screen name="transaction/[id]" />
             <Stack.Screen name="bills" />
