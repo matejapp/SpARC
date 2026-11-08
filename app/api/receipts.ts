@@ -1,3 +1,5 @@
+import { File } from 'expo-file-system';
+
 import { apiRequest } from '@/api/client';
 import type { ReceiptDraftResponse } from '@/types/api';
 
@@ -23,8 +25,11 @@ const PHOTO_TIMEOUT_MS = 45_000;
  */
 export function draftFromPhoto(uri: string) {
   const form = new FormData();
-  // React Native's FormData takes a file as { uri, name, type }; Android needs both name and type.
-  form.append('photo', { uri, name: 'receipt.jpg', type: 'image/jpeg' } as unknown as Blob);
+  // Since SDK 58 the global fetch is expo/fetch, which can't send React Native's
+  // { uri, name, type } parts (it throws before sending). It reads a file through
+  // expo-file-system's File, which is a Blob: its name is the part's filename, which ASP.NET
+  // needs to bind an IFormFile, and its type comes from the .jpg extension.
+  form.append('photo', new File(uri));
   return apiRequest<ReceiptDraftResponse>('/receipts/photo', {
     method: 'POST',
     form,

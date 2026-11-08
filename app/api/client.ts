@@ -30,8 +30,8 @@ type RequestOptions = {
   query?: Record<string, string | number | undefined>;
   /**
    * A multipart body instead of JSON (a receipt photo). fetch sets the Content-Type with its
-   * boundary itself. React Native reads a file part from its uri on every send, so the one
-   * retry after a refresh sends the file again.
+   * boundary itself. A file part is an expo-file-system File, read again on every send, so the
+   * one retry after a refresh sends the file again.
    */
   form?: FormData;
   /** false for the anonymous auth endpoints. */
