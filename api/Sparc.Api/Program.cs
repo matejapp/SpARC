@@ -140,6 +140,23 @@ builder.Services.AddHttpClient<IFiscalReceiptLookup, PursReceiptLookup>(client =
         client.DefaultRequestHeaders.UserAgent.ParseAdd("SpARC-API/1.0");
     })
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
+
+// The receipt reader (sparc-ai, D-048): on this machine in development, the homelab later.
+// Redirects off: the photo and the key go to the configured address and nowhere else.
+var ocrOptions = builder.Configuration.GetSection(ReceiptOcrOptions.Section).Get<ReceiptOcrOptions>()
+    ?? new ReceiptOcrOptions();
+if (!EF.IsDesignTime)
+{
+    ocrOptions.Validate();
+}
+builder.Services.AddSingleton(ocrOptions);
+builder.Services.AddHttpClient<IReceiptOcr, SparcAiReceiptOcr>(client =>
+    {
+        client.BaseAddress = new Uri(ocrOptions.BaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(ocrOptions.TimeoutSeconds);
+        client.MaxResponseContentBufferSize = 64 * 1024;
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
 builder.Services.AddScoped<IReceiptService, ReceiptService>();
 
 // Errors: exceptions → GlobalExceptionHandler; empty error responses (401, unknown route) →

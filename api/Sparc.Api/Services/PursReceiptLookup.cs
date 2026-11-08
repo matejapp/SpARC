@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Sparc.Api.Common;
 using Sparc.Api.Services.Interfaces;
 
 namespace Sparc.Api.Services;
@@ -21,7 +21,6 @@ namespace Sparc.Api.Services;
 public sealed partial class PursReceiptLookup(HttpClient http, ILogger<PursReceiptLookup> logger)
     : IFiscalReceiptLookup
 {
-    public const int MaxStoreNameLength = 100;
     private const int MaxDepth = 6;
 
     private static readonly string[] CompanyKeys = ["businessName", "companyName"];
@@ -29,12 +28,6 @@ public sealed partial class PursReceiptLookup(HttpClient http, ILogger<PursRecei
 
     [GeneratedRegex(@"^\d{9}$")]
     private static partial Regex TaxId();
-
-    [GeneratedRegex(@"\p{L}")]
-    private static partial Regex Letter();
-
-    [GeneratedRegex(@"\s+")]
-    private static partial Regex Whitespace();
 
     [GeneratedRegex(Common.FiscalReceiptNumbers.Pattern)]
     private static partial Regex ReceiptNumber();
@@ -136,7 +129,8 @@ public sealed partial class PursReceiptLookup(HttpClient http, ILogger<PursRecei
     {
         foreach (var key in keys)
         {
-            if (Find(root, key, 0) is { ValueKind: JsonValueKind.String } value && Clean(value.GetString()) is { } clean)
+            if (Find(root, key, 0) is { ValueKind: JsonValueKind.String } value
+                && ReceiptText.Clean(value.GetString()) is { } clean)
             {
                 return clean;
             }
@@ -180,34 +174,8 @@ public sealed partial class PursReceiptLookup(HttpClient http, ILogger<PursRecei
         {
             return (null, null);
         }
-        var company = at + 1 < lines.Length ? Clean(lines[at + 1]) : null;
-        var location = at + 2 < lines.Length ? Clean(lines[at + 2]) : null;
+        var company = at + 1 < lines.Length ? ReceiptText.Clean(lines[at + 1]) : null;
+        var location = at + 2 < lines.Length ? ReceiptText.Clean(lines[at + 2]) : null;
         return (company, location);
-    }
-
-    /// <summary>
-    /// The store name is someone else's text: control characters dropped, whitespace collapsed,
-    /// length capped. Null when nothing readable is left.
-    /// </summary>
-    internal static string? Clean(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return null;
-        }
-        var kept = new StringBuilder(text.Length);
-        foreach (var c in text)
-        {
-            if (!char.IsControl(c) && char.GetUnicodeCategory(c) != UnicodeCategory.Format)
-            {
-                kept.Append(c);
-            }
-        }
-        var clean = Whitespace().Replace(kept.ToString(), " ").Trim();
-        if (clean.Length > MaxStoreNameLength)
-        {
-            clean = clean[..MaxStoreNameLength].TrimEnd();
-        }
-        return Letter().IsMatch(clean) ? clean : null;
     }
 }

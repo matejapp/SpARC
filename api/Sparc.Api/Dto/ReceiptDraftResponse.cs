@@ -6,10 +6,14 @@ namespace Sparc.Api.Dto;
 /// </summary>
 public sealed class ReceiptDraftResponse
 {
-    /// <summary>The receipt's date in Serbia (Europe/Belgrade).</summary>
-    public required DateOnly OccurredOn { get; init; }
+    /// <summary>
+    /// The receipt's date in Serbia (Europe/Belgrade). Always set from a QR code; null when a
+    /// photo didn't show it legibly (D-048).
+    /// </summary>
+    public required DateOnly? OccurredOn { get; init; }
 
-    public required decimal Amount { get; init; }
+    /// <summary>Always set from a QR code; null when a photo didn't show it legibly.</summary>
+    public required decimal? Amount { get; init; }
 
     /// <summary>Always RSD: fiscal receipts are issued in dinars.</summary>
     public required string Currency { get; init; }
@@ -23,7 +27,10 @@ public sealed class ReceiptDraftResponse
     /// <summary>The shop or till it was issued at, e.g. "1043567-Maxi 155". Null as above.</summary>
     public required string? LocationName { get; init; }
 
-    /// <summary>Sent back with the create, so the same receipt can't be entered twice.</summary>
+    /// <summary>
+    /// Sent back with the create, so the same receipt can't be entered twice. Null from a photo:
+    /// an OCR misread could block a different receipt.
+    /// </summary>
     public required string? ReceiptNumber { get; init; }
 
     /// <summary>Null until category suggestion exists (Sprint 4, list 4.0.4).</summary>

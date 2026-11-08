@@ -15,6 +15,7 @@ public static class RateLimitPolicies
     public const string Register = "register";
     public const string Refresh = "refresh";
     public const string Receipts = "receipts";
+    public const string ReceiptPhotos = "receipt-photos";
 
     public static IServiceCollection AddAuthRateLimits(this IServiceCollection services) =>
         services.AddRateLimiter(options =>
@@ -27,6 +28,8 @@ public static class RateLimitPolicies
             // Per IP, not per user: the limiter runs before authentication. A person scans a few
             // receipts a minute at most; 30 stops a loop from turning the API into a proxy.
             options.AddPolicy(Receipts, context => PerIp(context, permits: 30, TimeSpan.FromMinutes(1)));
+            // Each photo costs a few seconds of OCR CPU (D-048).
+            options.AddPolicy(ReceiptPhotos, context => PerIp(context, permits: 10, TimeSpan.FromMinutes(1)));
 
             // The body is left empty on purpose: UseStatusCodePages fills it with ProblemDetails,
             // the same as every other error response (D-016).

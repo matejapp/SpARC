@@ -25,6 +25,12 @@ public sealed class AuthenticationFailedException(string message) : AppException
 public sealed class ServiceUnavailableException(string message, Exception innerException)
     : AppException(message, innerException);
 
+/// <summary>
+/// 422. The request was well formed but its content can't be used — a receipt photo with
+/// nothing readable on it. The message says what the user can do instead.
+/// </summary>
+public sealed class UnprocessableException(string message) : AppException(message);
+
 /// <summary>409. Duplicate data, or a state change that is no longer allowed (e.g. already paid).</summary>
 public sealed class ConflictException(string message) : AppException(message);
 

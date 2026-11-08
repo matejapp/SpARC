@@ -274,6 +274,7 @@ not built yet.
 | | `GET /api/v1/occurrences/upcoming?today=` | dashboard: overdue and due within 30 days |
 | | `POST /api/v1/occurrences/{id}/pay` | creates exactly one expense; 409 if already paid |
 | Receipts | `POST /api/v1/receipts/qr` | `{ text }` from a fiscal receipt's QR code → a draft expense (date, total, company, location); nothing is saved |
+| | `POST /api/v1/receipts/photo` | multipart `photo` (JPEG/PNG, ≤ 10 MB) → the same draft, read by OCR; 422 if nothing legible, 503 if the reader is down |
 | Health | `GET /health` | public; checks the database |
 
 Example error:
