@@ -273,7 +273,7 @@ not built yet.
 | Bill months | `GET /api/v1/occurrences?from=&to=&billId=` | calendar, or one bill's months |
 | | `GET /api/v1/occurrences/upcoming?today=` | dashboard: overdue and due within 30 days |
 | | `POST /api/v1/occurrences/{id}/pay` | creates exactly one expense; 409 if already paid |
-| Receipts | `POST /api/v1/receipts/scan` | returns suggestions only — nothing is saved; iteration 4 |
+| Receipts | `POST /api/v1/receipts/qr` | `{ text }` from a fiscal receipt's QR code → a draft expense (date, total, store); nothing is saved |
 | Health | `GET /health` | public; checks the database |
 
 Example error:

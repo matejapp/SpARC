@@ -123,6 +123,25 @@ builder.Services.AddHttpClient<IFxRateProvider, KursResenjeRateProvider>(client 
 builder.Services.AddScoped<IFxRateRepository, FxRateRepository>();
 builder.Services.AddScoped<IFxRateService, FxRateService>();
 
+// Fiscal receipt lookups (Sprint 4, D-045). One fixed host, no redirects (a redirect could point
+// anywhere), a short timeout and a capped body: the scanned text never chooses where we connect.
+var receiptOptions = builder.Configuration.GetSection(FiscalReceiptOptions.Section).Get<FiscalReceiptOptions>()
+    ?? new FiscalReceiptOptions();
+if (!EF.IsDesignTime)
+{
+    receiptOptions.Validate();
+}
+builder.Services.AddSingleton(receiptOptions);
+builder.Services.AddHttpClient<IFiscalReceiptLookup, PursReceiptLookup>(client =>
+    {
+        client.BaseAddress = new Uri(receiptOptions.BaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(receiptOptions.TimeoutSeconds);
+        client.MaxResponseContentBufferSize = 512 * 1024;
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("SpARC-API/1.0");
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
+builder.Services.AddScoped<IReceiptService, ReceiptService>();
+
 // Errors: exceptions → GlobalExceptionHandler; empty error responses (401, unknown route) →
 // status code pages. Both write ProblemDetails, with a traceId to find the server-side log.
 builder.Services.AddProblemDetails();

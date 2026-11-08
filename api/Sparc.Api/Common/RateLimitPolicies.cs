@@ -7,12 +7,14 @@ namespace Sparc.Api.Common;
 /// <summary>
 /// Per-IP limits on the anonymous auth endpoints (D-022). Identity lockout is the per-account
 /// layer; this one stops a single source from spraying many accounts or probing for emails.
+/// Receipt scans are limited too: each one makes a request to the tax authority's site (D-045).
 /// </summary>
 public static class RateLimitPolicies
 {
     public const string Login = "login";
     public const string Register = "register";
     public const string Refresh = "refresh";
+    public const string Receipts = "receipts";
 
     public static IServiceCollection AddAuthRateLimits(this IServiceCollection services) =>
         services.AddRateLimiter(options =>
@@ -22,6 +24,9 @@ public static class RateLimitPolicies
             // A device refreshes every ~15 minutes; 20 a minute leaves room for several devices
             // behind one carrier NAT.
             options.AddPolicy(Refresh, context => PerIp(context, permits: 20, TimeSpan.FromMinutes(1)));
+            // Per IP, not per user: the limiter runs before authentication. A person scans a few
+            // receipts a minute at most; 30 stops a loop from turning the API into a proxy.
+            options.AddPolicy(Receipts, context => PerIp(context, permits: 30, TimeSpan.FromMinutes(1)));
 
             // The body is left empty on purpose: UseStatusCodePages fills it with ProblemDetails,
             // the same as every other error response (D-016).
