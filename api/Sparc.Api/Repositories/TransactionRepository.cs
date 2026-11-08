@@ -87,4 +87,16 @@ public sealed class TransactionRepository(SparcDbContext db) : ITransactionRepos
             .Where(t => t.UserId == userId && t.FiscalReceiptNumber == fiscalReceiptNumber)
             .Select(t => (Guid?)t.Id)
             .FirstOrDefaultAsync();
+
+    // Walks the user's rows newest first on (UserId, OccurredOn DESC) and stops at the first
+    // match: bounded by one user's history, which for a personal tracker is thousands of rows,
+    // not millions. No index on Description: it is free text, and this runs once per scan.
+    public async Task<Guid?> FindLatestCategoryIdByDescriptionAsync(Guid userId, string description) =>
+        await db.Transactions.AsNoTracking()
+            .Where(t => t.UserId == userId && t.Type == TransactionType.Expense
+                        && t.CategoryId != null && t.Description == description)
+            .OrderByDescending(t => t.OccurredOn)
+            .ThenByDescending(t => t.CreatedAt)
+            .Select(t => t.CategoryId)
+            .FirstOrDefaultAsync();
 }

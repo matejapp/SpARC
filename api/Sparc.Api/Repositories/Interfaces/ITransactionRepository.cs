@@ -53,4 +53,10 @@ public interface ITransactionRepository
 
     /// <summary>The id of the user's transaction with this fiscal receipt number, if any (D-047).</summary>
     Task<Guid?> FindIdByFiscalReceiptNumberAsync(Guid userId, string fiscalReceiptNumber);
+
+    /// <summary>
+    /// The category of the user's most recent categorised expense with exactly this description,
+    /// if any: what they chose last time at the same shop (D-049).
+    /// </summary>
+    Task<Guid?> FindLatestCategoryIdByDescriptionAsync(Guid userId, string description);
 }

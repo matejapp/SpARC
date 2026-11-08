@@ -14,6 +14,7 @@ namespace Sparc.Api.Services;
 public sealed class ReceiptService(
     IFiscalReceiptLookup lookup,
     IReceiptOcr ocr,
+    ICategorySuggester categories,
     ITransactionRepository transactions,
     FiscalReceiptOptions options,
     ILogger<ReceiptService> logger) : IReceiptService
@@ -71,7 +72,10 @@ public sealed class ReceiptService(
             StoreName = record?.StoreName,
             LocationName = record?.LocationName,
             ReceiptNumber = number,
-            SuggestedCategoryId = null,
+            // Already saved: there is nothing to categorise.
+            SuggestedCategoryId = existing is null
+                ? await categories.SuggestAsync(userId, record?.StoreName, record?.LocationName, cancellationToken)
+                : null,
             ExistingTransactionId = existing,
         };
     }
@@ -117,7 +121,8 @@ public sealed class ReceiptService(
             StoreName = found.StoreName,
             LocationName = found.LocationName,
             ReceiptNumber = null,
-            SuggestedCategoryId = null,
+            SuggestedCategoryId =
+                await categories.SuggestAsync(userId, found.StoreName, found.LocationName, cancellationToken),
             ExistingTransactionId = null,
         };
     }

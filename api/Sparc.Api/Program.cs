@@ -157,6 +157,16 @@ builder.Services.AddHttpClient<IReceiptOcr, SparcAiReceiptOcr>(client =>
         client.MaxResponseContentBufferSize = 64 * 1024;
     })
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
+// Category suggestions (D-049) also go through sparc-ai, with the same address and key. Short:
+// the user is waiting for the draft, and without an answer the keyword table still runs.
+builder.Services.AddHttpClient<IReceiptCategoryAi, SparcAiCategoryClassifier>(client =>
+    {
+        client.BaseAddress = new Uri(ocrOptions.BaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(8);
+        client.MaxResponseContentBufferSize = 16 * 1024;
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
+builder.Services.AddScoped<ICategorySuggester, CategorySuggester>();
 builder.Services.AddScoped<IReceiptService, ReceiptService>();
 
 // Errors: exceptions → GlobalExceptionHandler; empty error responses (401, unknown route) →
