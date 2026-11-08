@@ -19,11 +19,29 @@ public sealed class DisplayCurrencyService(
     IAnalyticsRepository analytics,
     IFxRateService fxRates) : IDisplayCurrencyService
 {
-    public async Task<string> PrepareAsync(Guid userId, DateOnly from, DateOnly to)
+    private static readonly IReadOnlyDictionary<DateOnly, decimal> NoRates = new Dictionary<DateOnly, decimal>();
+
+    public async Task<DisplayRates> RatesForAsync(Guid userId, string? currency, IReadOnlyCollection<Transaction> rows)
+    {
+        var code = currency?.ToUpperInvariant() ?? await PreferredAsync(userId);
+        if (code == Currencies.Rsd)
+        {
+            return new DisplayRates(code, NoRates);
+        }
+        var dates = rows.Where(t => t.Currency != code).Select(t => t.OccurredOn).Distinct().ToList();
+        return new DisplayRates(code, await fxRates.DisplayRatesAsync(code, dates));
+    }
+
+    private async Task<string> PreferredAsync(Guid userId)
     {
         // A valid token can outlive its account; that is a 404, not a 500 (as UserService).
         var user = await users.FindByIdAsync(userId.ToString()) ?? throw new NotFoundException("User");
-        var currency = user.PreferredCurrency.ToUpperInvariant();
+        return user.PreferredCurrency.ToUpperInvariant();
+    }
+
+    public async Task<string> PrepareAsync(Guid userId, DateOnly from, DateOnly to)
+    {
+        var currency = await PreferredAsync(userId);
         if (currency == Currencies.Rsd)
         {
             return currency;

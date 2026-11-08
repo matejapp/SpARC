@@ -11,8 +11,9 @@ export function useMe() {
 
 /**
  * Switches the display currency. The answer is the updated account, so ['me'] is written
- * directly; every total shown in that currency is refetched: the dashboard and analytics.
- * Transactions and bills show the currency they were entered in, so they stay cached (D-043).
+ * directly; everything shown in that currency is refetched: the dashboard, analytics and the
+ * transactions, whose rows show it too (D-051). Bills show the currency they were entered in,
+ * so they stay cached (D-043).
  */
 export function useUpdateMe() {
   const queryClient = useQueryClient();
@@ -22,6 +23,7 @@ export function useUpdateMe() {
       queryClient.setQueryData(['me'], user);
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
 }

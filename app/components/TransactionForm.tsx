@@ -57,6 +57,7 @@ export function TransactionForm({
   topInset,
   after,
   frozen,
+  belowAmount,
 }: {
   initial: TransactionDraft;
   frozen?: FrozenRate;
@@ -67,6 +68,8 @@ export function TransactionForm({
   error: Error | null;
   topInset?: boolean;
   after?: ReactNode;
+  /** Under the amount, told whether amount, currency and date are still the saved ones. */
+  belowAmount?: (unchanged: boolean) => ReactNode;
 }) {
   const styles = useStyles();
   const { categoryTone, colors, scheme, shadows } = useTheme();
@@ -178,6 +181,8 @@ export function TransactionForm({
           <Text style={styles.conversion}>{conversion}</Text>
         ) : null}
       </View>
+
+      {belowAmount?.(valueUnchanged)}
 
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Category</Text>

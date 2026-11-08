@@ -1,6 +1,6 @@
 import { apiRequest } from '@/api/client';
 import type { TransactionFilters } from '@/lib/transactionFilters';
-import type { PagedResponse, TransactionRequest, TransactionResponse } from '@/types/api';
+import type { Currency, PagedResponse, TransactionRequest, TransactionResponse } from '@/types/api';
 
 export const TRANSACTIONS_PAGE_SIZE = 20;
 
@@ -20,8 +20,9 @@ export function listTransactions(page: number, filters: TransactionFilters = {},
   });
 }
 
-export function getTransaction(id: string) {
-  return apiRequest<TransactionResponse>(`/transactions/${encodeURIComponent(id)}`);
+/** One transaction; `currency` sets its display amount (D-051), else the preferred currency. */
+export function getTransaction(id: string, currency?: Currency) {
+  return apiRequest<TransactionResponse>(`/transactions/${encodeURIComponent(id)}`, { query: { currency } });
 }
 
 export function createTransaction(request: TransactionRequest) {

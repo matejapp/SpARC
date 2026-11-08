@@ -16,7 +16,7 @@ import {
 } from '@/api/transactions';
 import { rescheduleReminders } from '@/lib/reminders';
 import type { TransactionFilters } from '@/lib/transactionFilters';
-import type { PagedResponse, TransactionRequest, TransactionResponse, TransactionType } from '@/types/api';
+import type { Currency, PagedResponse, TransactionRequest, TransactionResponse, TransactionType } from '@/types/api';
 
 // Every transaction query lives under the ['transactions'] prefix, so one invalidation after a
 // write refreshes the list, any open detail and — with ['dashboard'] and ['analytics'] — every
@@ -72,6 +72,15 @@ export function useTransaction(id: string) {
       }
       return undefined;
     },
+  });
+}
+
+/** A saved transaction shown in another currency (D-051). Nothing is fetched while currency is null. */
+export function useTransactionIn(id: string, currency: Currency | null) {
+  return useQuery({
+    queryKey: ['transactions', 'detail', id, 'in', currency],
+    queryFn: () => getTransaction(id, currency ?? undefined),
+    enabled: currency !== null,
   });
 }
 

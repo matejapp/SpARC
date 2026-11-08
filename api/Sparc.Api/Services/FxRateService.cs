@@ -164,6 +164,28 @@ public sealed class FxRateService(
         return withoutRate;
     }
 
+    public async Task<IReadOnlyDictionary<DateOnly, decimal>> DisplayRatesAsync(
+        string currency, IReadOnlyCollection<DateOnly> dates)
+    {
+        var code = currency.ToUpperInvariant();
+        if (dates.Count == 0)
+        {
+            return new Dictionary<DateOnly, decimal>();
+        }
+
+        try
+        {
+            await EnsureRatesAsync(code, dates);
+        }
+        catch (ServiceUnavailableException e)
+        {
+            // Display only: what is stored still converts, the rest shows as entered. A stored
+            // amount never depends on this path (FreezeAsync refuses instead).
+            logger.LogWarning(e, "NBS {Currency} rates unavailable; converting with stored rates only", code);
+        }
+        return (await rates.ListAsync(code, dates)).ToDictionary(r => r.Date, r => r.RateToRsd);
+    }
+
     public async Task<decimal> TodayRateToRsdAsync(string currency)
     {
         if (string.Equals(currency, Currencies.Rsd, StringComparison.OrdinalIgnoreCase))

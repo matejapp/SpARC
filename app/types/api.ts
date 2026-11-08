@@ -60,6 +60,10 @@ export type TransactionResponse = {
   currency: Currency;
   rateToRsd: number;
   amountRsd: number;
+  /** The preferred currency, or the one a single read asked for (D-051). */
+  displayCurrency: Currency;
+  /** The amount in displayCurrency at its date's NBS rate; null when there is none (show amount). */
+  displayAmount: number | null;
   categoryId: string | null;
   categoryName: string | null;
   occurredOn: IsoDate;

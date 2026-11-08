@@ -14,6 +14,7 @@ public sealed class TransactionService(
     ITransactionRepository transactions,
     ICategoryRepository categories,
     IFxRateService fxRates,
+    IDisplayCurrencyService display,
     ILogger<TransactionService> logger) : ITransactionService
 {
     public async Task<PagedResponse<TransactionResponse>> ListAsync(Guid userId, TransactionListQuery query)
@@ -31,20 +32,22 @@ public sealed class TransactionService(
             Uncategorised: query.Uncategorised,
             Currency: query.Currency?.ToUpperInvariant());
         var (items, totalCount) = await transactions.ListAsync(userId, filter, query.Page, query.PageSize);
+        var rates = await display.RatesForAsync(userId, null, items);
 
         return new PagedResponse<TransactionResponse>
         {
-            Items = items.Select(t => ToResponse(t, t.Category)).ToList(),
+            Items = items.Select(t => ToResponse(t, t.Category, rates)).ToList(),
             Page = query.Page,
             PageSize = query.PageSize,
             TotalCount = totalCount,
         };
     }
 
-    public async Task<TransactionResponse> GetAsync(Guid userId, Guid id)
+    public async Task<TransactionResponse> GetAsync(Guid userId, Guid id, string? displayCurrency)
     {
         var transaction = await transactions.GetAsync(userId, id) ?? throw new NotFoundException("Transaction");
-        return ToResponse(transaction, transaction.Category);
+        var rates = await display.RatesForAsync(userId, displayCurrency, [transaction]);
+        return ToResponse(transaction, transaction.Category, rates);
     }
 
     public async Task<TransactionResponse> CreateAsync(Guid userId, TransactionRequest request)
@@ -64,7 +67,7 @@ public sealed class TransactionService(
         await transactions.AddAsync(transaction);
         logger.LogInformation("Transaction created {TransactionId} for {UserId}", transaction.Id, userId);
 
-        return ToResponse(transaction, category);
+        return ToResponse(transaction, category, await display.RatesForAsync(userId, null, [transaction]));
     }
 
     // Ownership first: someone else's id is a 404 whatever the body says.
@@ -191,7 +194,7 @@ public sealed class TransactionService(
     internal const string NoRateMessage = "No official NBS exchange rate exists for this date. Enter the amount in RSD.";
 
     /// <summary>Shared with BillOccurrenceService, which answers a payment with its expense.</summary>
-    internal static TransactionResponse ToResponse(Transaction transaction, Category? category) => new()
+    internal static TransactionResponse ToResponse(Transaction transaction, Category? category, DisplayRates rates) => new()
     {
         Id = transaction.Id,
         Type = transaction.Type,
@@ -199,6 +202,8 @@ public sealed class TransactionService(
         Currency = transaction.Currency,
         RateToRsd = transaction.RateToRsd,
         AmountRsd = transaction.AmountRsd,
+        DisplayCurrency = rates.Currency,
+        DisplayAmount = rates.Convert(transaction),
         CategoryId = transaction.CategoryId,
         CategoryName = category?.Name,
         OccurredOn = transaction.OccurredOn,

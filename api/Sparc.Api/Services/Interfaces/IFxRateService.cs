@@ -37,6 +37,14 @@ public interface IFxRateService
     Task<decimal> TodayRateToRsdAsync(string currency);
 
     /// <summary>
+    /// The NBS middle rate of each of <paramref name="dates"/> for <paramref name="currency"/>
+    /// (EUR or USD), fetched and stored first where missing. For display only (D-051): when NBS
+    /// can't be reached the rates already stored are returned and the other dates are missing,
+    /// so a list still shows instead of failing with a 503.
+    /// </summary>
+    Task<IReadOnlyDictionary<DateOnly, decimal>> DisplayRatesAsync(string currency, IReadOnlyCollection<DateOnly> dates);
+
+    /// <summary>
     /// Makes sure every date that has a transaction has final EUR and USD rows. Safe to re-run:
     /// dates already final are skipped. Stops at the first provider failure (Completed = false).
     /// </summary>

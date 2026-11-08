@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '@/api/client';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { ShowInCurrency } from '@/components/ShowInCurrency';
 import { TransactionForm, type TransactionDraft } from '@/components/TransactionForm';
 import { Button } from '@/components/ui/Button';
 import { RowsSkeleton } from '@/components/ui/Skeleton';
@@ -83,6 +84,7 @@ export default function TransactionScreen() {
       key={t.id}
       initial={toDraft(t)}
       frozen={{ amountRsd: t.amountRsd, rateToRsd: t.rateToRsd }}
+      belowAmount={(unchanged) => <ShowInCurrency transaction={t} unchanged={unchanged} />}
       header={(kind) => <ScreenHeader title={kind === 'income' ? 'Edit income' : 'Edit expense'} />}
       submitLabel={() => 'Save changes'}
       pending={update.isPending}

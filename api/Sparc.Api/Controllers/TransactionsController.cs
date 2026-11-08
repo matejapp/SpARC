@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Sparc.Api.Dto;
 using Sparc.Api.Services.Interfaces;
+using Sparc.Api.Validators;
 
 namespace Sparc.Api.Controllers;
 
@@ -11,9 +12,13 @@ public sealed class TransactionsController(ITransactionService transactionServic
     public async Task<ActionResult<PagedResponse<TransactionResponse>>> List([FromQuery] TransactionListQuery query) =>
         await transactionService.ListAsync(CurrentUserId, query);
 
+    /// <summary>
+    /// One transaction. <c>?currency=EUR</c> shows its amount in that currency at its date's NBS
+    /// rate (D-051); without it, in the caller's preferred currency. Display only, nothing changes.
+    /// </summary>
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<TransactionResponse>> Get(Guid id) =>
-        await transactionService.GetAsync(CurrentUserId, id);
+    public async Task<ActionResult<TransactionResponse>> Get(Guid id, [FromQuery, SupportedCurrency] string? currency) =>
+        await transactionService.GetAsync(CurrentUserId, id, currency);
 
     [HttpPost]
     public async Task<ActionResult<TransactionResponse>> Create(TransactionRequest request)

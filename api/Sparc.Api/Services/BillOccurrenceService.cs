@@ -14,6 +14,7 @@ namespace Sparc.Api.Services;
 public sealed class BillOccurrenceService(
     IBillOccurrenceRepository occurrences,
     IFxRateService fxRates,
+    IDisplayCurrencyService display,
     ILogger<BillOccurrenceService> logger) : IBillOccurrenceService
 {
     public async Task<List<OccurrenceResponse>> ListAsync(Guid userId, OccurrenceListQuery query)
@@ -79,7 +80,7 @@ public sealed class BillOccurrenceService(
         logger.LogInformation("Bill occurrence {OccurrenceId} paid for {UserId} as transaction {TransactionId}",
             id, userId, expense.Id);
 
-        return TransactionService.ToResponse(expense, bill.Category);
+        return TransactionService.ToResponse(expense, bill.Category, await display.RatesForAsync(userId, null, [expense]));
     }
 
     // The UTC month, as the dashboard's default (D-025); the app always sends explicit dates.

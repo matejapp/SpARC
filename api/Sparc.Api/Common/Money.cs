@@ -13,4 +13,11 @@ public static class Money
     /// </summary>
     public static decimal ToRsd(decimal amount, decimal rateToRsd) =>
         Math.Round(amount * rateToRsd, 2, MidpointRounding.AwayFromZero);
+
+    /// <summary>
+    /// An RSD value in a foreign currency, for display only (D-041, D-051): one division, rounded
+    /// once like <see cref="ToRsd"/>. Never stored.
+    /// </summary>
+    public static decimal FromRsd(decimal amountRsd, decimal rateToRsd) =>
+        Math.Round(amountRsd / rateToRsd, 2, MidpointRounding.AwayFromZero);
 }

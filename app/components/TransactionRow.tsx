@@ -7,7 +7,8 @@ import type { TransactionResponse } from '@/types/api';
 
 // One row as the board draws it: 44 × 44 tile with the category icon in its colour (D-032), the description (or the
 // category when there is none), a caption, and the signed amount — ink for an expense, green
-// for income, never orange.
+// for income, never orange. The amount is in the preferred currency (D-051); a row entered in
+// another one shows that original amount small beneath it. No rate for its date: as entered.
 export function TransactionRow({
   item,
   caption,
@@ -25,13 +26,16 @@ export function TransactionRow({
   const ink = income ? colors.income : colors.ink; // the amount
   const tone = categoryTone(item.categoryName, item.type);
   const title = item.description || item.categoryName || (income ? 'Income' : 'Expense');
-  const amount = formatSigned(item.amount, item.type, item.currency === 'RSD' ? undefined : item.currency);
+  const shownCurrency = item.displayAmount === null ? item.currency : item.displayCurrency;
+  const shown = item.displayAmount ?? item.amount;
+  const amount = formatSigned(shown, item.type, shownCurrency === 'RSD' ? undefined : shownCurrency);
+  const original = shownCurrency === item.currency ? null : formatSigned(item.amount, item.type, item.currency);
 
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${title}, ${caption}, ${income ? 'income' : 'expense'} ${formatSigned(item.amount, item.type, item.currency)}`}
+      accessibilityLabel={`${title}, ${caption}, ${income ? 'income' : 'expense'} ${formatSigned(shown, item.type, shownCurrency)}${original ? `, entered as ${original}` : ''}`}
       accessibilityHint="Opens the transaction"
       style={({ pressed }) => [styles.row, divider && styles.divider, pressed && styles.pressed]}
     >
@@ -46,7 +50,10 @@ export function TransactionRow({
           {caption}
         </Text>
       </View>
-      <Text style={[styles.amount, { color: ink }]}>{amount}</Text>
+      <View style={styles.amounts}>
+        <Text style={[styles.amount, { color: ink }]}>{amount}</Text>
+        {original ? <Text style={styles.original}>{original}</Text> : null}
+      </View>
     </Pressable>
   );
 }
@@ -65,5 +72,7 @@ const useStyles = makeStyles((t) => ({
   text: { flex: 1, minWidth: 0 },
   title: { ...type.rowTitle, color: t.colors.ink },
   caption: { ...type.caption, color: t.colors.ink2 },
+  amounts: { alignItems: 'flex-end' },
   amount: { ...type.rowAmount, ...tabularNums },
+  original: { ...type.caption, ...tabularNums, color: t.colors.ink2 },
 }));
