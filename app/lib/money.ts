@@ -31,6 +31,21 @@ export function formatSigned(value: number, type: TransactionType, currency?: Cu
   return currency ? `${text} ${currency}` : text;
 }
 
+/** An axis label: whole units, grouped, no currency — 140000 → "140.000". */
+export function formatWhole(value: number): string {
+  return String(Math.round(Math.abs(value))).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+/**
+ * A share or rate the API sent as a fraction (D-042): 0.4067 → "40,7 %". One decimal; the
+ * fraction already has 4. Pass `signed` for a change in points: 0.1402 → "+14,0 pts".
+ */
+export function formatPercent(fraction: number, signed = false): string {
+  const text = (Math.abs(fraction) * 100).toFixed(1).replace('.', ',');
+  if (!signed) return `${fraction < 0 ? MINUS : ''}${text} %`;
+  return `${fraction < 0 ? MINUS : '+'}${text} pts`;
+}
+
 /**
  * An exchange rate as the API stores it (up to 6 decimals; NBS publishes 4): 117.3931 →
  * "117,3931". At least 4 decimals, trailing zeros past that dropped — display only, never parsed.

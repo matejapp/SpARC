@@ -7,9 +7,11 @@ import { getSessionStatus, subscribeSession } from '@/lib/session';
 // Server state lives in TanStack Query (ARCHITECTURE.md → App structure). Query keys:
 //   ['transactions', 'list'] · ['transactions', 'detail', id] · ['categories', kind] ·
 //   ['dashboard', from, to] · ['me'] · ['bills', 'list'] · ['bills', 'detail', id] ·
-//   ['bills', 'upcoming'] · ['occurrences', from, to] · ['occurrences', 'bill', id]
-// A change to a transaction invalidates ['transactions'] and ['dashboard'] together; paying a
-// bill touches all four prefixes (hooks/useBills.ts).
+//   ['bills', 'upcoming'] · ['occurrences', from, to] · ['occurrences', 'bill', id] ·
+//   ['analytics', endpoint, …params] (hooks/useAnalytics.ts)
+// A change to a transaction invalidates ['transactions'], ['dashboard'] and ['analytics']
+// together; paying a bill touches every money prefix (hooks/useBills.ts); switching the display
+// currency refetches ['dashboard'] and ['analytics'] (hooks/useMe.ts).
 
 export const queryClient = new QueryClient({
   defaultOptions: {

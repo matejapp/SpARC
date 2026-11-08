@@ -125,3 +125,99 @@ export type DashboardSummaryResponse = {
   totalExpense: number;
   difference: number;
 };
+
+// Analytics (D-042). Every amount is in `currency`, the caller's display currency. Shares and
+// the savings rate are fractions with 4 decimals (0.4067 = 40,67 %).
+
+export type AnalyticsPeriodFigures = {
+  from: IsoDate;
+  to: IsoDate;
+  income: number;
+  expense: number;
+  net: number;
+  savingsRate: number | null; // null when income is 0
+  days: number;
+  averageDailySpend: number;
+};
+
+export type AnalyticsSummaryResponse = {
+  currency: Currency;
+  current: AnalyticsPeriodFigures;
+  previous: AnalyticsPeriodFigures;
+  change: {
+    income: number;
+    expense: number;
+    net: number;
+    savingsRate: number | null; // fraction points; null when either rate is
+    averageDailySpend: number;
+  };
+};
+
+export type AnalyticsTrendResponse = {
+  from: IsoDate;
+  to: IsoDate;
+  currency: Currency;
+  months: { month: string; income: number; expense: number; net: number }[]; // month "2026-10"
+};
+
+export type AnalyticsPaceResponse = {
+  month: string;
+  previousMonth: string;
+  currency: Currency;
+  /** Day 1 to the longer month's last day; null after today and past a month's end. */
+  days: { day: number; current: number | null; previous: number | null }[];
+};
+
+export type AnalyticsCategoryShare = {
+  categoryId: string | null; // null: the uncategorised bucket
+  name: string | null;
+  total: number;
+  share: number;
+  count: number;
+};
+
+export type AnalyticsCategoriesResponse = {
+  from: IsoDate;
+  to: IsoDate;
+  currency: Currency;
+  type: TransactionType;
+  total: number;
+  categories: AnalyticsCategoryShare[];
+};
+
+export type AnalyticsCategoryMonthsResponse = {
+  from: IsoDate;
+  to: IsoDate;
+  currency: Currency;
+  series: { categoryId: string | null; name: string | null; isOther: boolean }[];
+  months: { month: string; amounts: number[] }[]; // amounts line up with series
+};
+
+export type AnalyticsDailyResponse = {
+  month: string;
+  currency: Currency;
+  days: { date: IsoDate; expense: number; income: number }[];
+};
+
+export type AnalyticsBillsResponse = {
+  from: IsoDate;
+  to: IsoDate;
+  currency: Currency;
+  paid: { count: number; total: number };
+  unpaid: {
+    count: number;
+    byCurrency: { currency: Currency; count: number; amount: number }[];
+    estimatedTotal: number;
+    isEstimate: boolean;
+  };
+  expense: number;
+  recurringShare: number | null;
+};
+
+export type AnalyticsCurrenciesResponse = {
+  from: IsoDate;
+  to: IsoDate;
+  currency: Currency;
+  type: TransactionType;
+  currencies: { entryCurrency: Currency; count: number; amount: number; total: number; share: number }[];
+};

@@ -19,7 +19,8 @@ import type { TransactionFilters } from '@/lib/transactionFilters';
 import type { PagedResponse, TransactionRequest, TransactionResponse, TransactionType } from '@/types/api';
 
 // Every transaction query lives under the ['transactions'] prefix, so one invalidation after a
-// write refreshes the list, any open detail and — with ['dashboard'] — the month totals.
+// write refreshes the list, any open detail and — with ['dashboard'] and ['analytics'] — every
+// total built from them.
 
 const LIST_KEY = ['transactions', 'list'] as const;
 type ListData = InfiniteData<PagedResponse<TransactionResponse>>;
@@ -88,6 +89,7 @@ function useInvalidateMoney() {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ['transactions'] }),
       queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['analytics'] }),
     ]);
 }
 
@@ -120,6 +122,7 @@ export function useDeleteTransaction(id: string) {
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: LIST_KEY }),
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['analytics'] }),
         queryClient.invalidateQueries({ queryKey: ['bills'] }),
         queryClient.invalidateQueries({ queryKey: ['occurrences'] }),
       ]);

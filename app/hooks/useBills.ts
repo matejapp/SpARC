@@ -80,7 +80,8 @@ export function useUpcomingBills() {
   });
 }
 
-// Every bill change also moves its reminders; rescheduling runs in the background.
+// Every bill change also moves its reminders; rescheduling runs in the background. Analytics
+// counts unpaid bills, so it refreshes too.
 function useInvalidateBills() {
   const queryClient = useQueryClient();
   return () => {
@@ -88,6 +89,7 @@ function useInvalidateBills() {
     return Promise.all([
       queryClient.invalidateQueries({ queryKey: ['bills'] }),
       queryClient.invalidateQueries({ queryKey: ['occurrences'] }),
+      queryClient.invalidateQueries({ queryKey: ['analytics'] }),
     ]);
   };
 }
@@ -122,7 +124,7 @@ export function usePayOccurrence() {
     },
     onSettled: () =>
       Promise.all(
-        ['occurrences', 'bills', 'transactions', 'dashboard'].map((prefix) =>
+        ['occurrences', 'bills', 'transactions', 'dashboard', 'analytics'].map((prefix) =>
           queryClient.invalidateQueries({ queryKey: [prefix] }),
         ),
       ),
@@ -143,6 +145,7 @@ export function useDeactivateBill(id: string) {
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: LIST_KEY }),
         queryClient.invalidateQueries({ queryKey: ['bills', 'upcoming'] }),
+        queryClient.invalidateQueries({ queryKey: ['analytics'] }),
         queryClient.invalidateQueries({
           queryKey: ['occurrences'],
           predicate: (query) => !(query.queryKey[1] === 'bill' && query.queryKey[2] === id),
