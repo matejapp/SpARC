@@ -63,9 +63,7 @@ belongs to exactly one account and is visible to no one else.
 
 ### Accounts
 - Register with username, email and password, and choose a preferred display currency
-- Email verification, with resend if the link doesn't arrive
 - Sign in with email or username; stay signed in across app restarts
-- Forgot password → reset by email
 - Sign out everywhere it matters — the session is revoked on the server, not just cleared on the phone
 
 ### Transactions
@@ -80,14 +78,19 @@ belongs to exactly one account and is visible to no one else.
 - Filter by type, date range, category and currency — and clear them all in one action
 
 ### Dashboard and analytics
-- Total income, total expense and what's left, for any period
-- Trend chart of income vs expense over time
-- Spending broken down by category
-- Upcoming unpaid bills at a glance
+- Home: total income, total expense and what's left for the month, and the bills due soon
+- An Analytics tab with a period switch (week, month, quarter, year) and the period before for
+  comparison: net, savings rate and average daily spend
+- Income vs expense trend by month, and this month's spending pace against last month's
+- Spending by category, the top categories month by month, and a day-by-day view
+- Bills paid and still unpaid, and how much of the spending is recurring
+- Which currencies the money was entered in
 - A friendly empty state for a brand-new account
 
 ### Settings
-- Dark (the default) or light theme, switched in Settings and remembered on the phone
+- Opened from the avatar on Home
+- Dark (the default) or light theme, remembered on the phone
+- Preferred display currency: RSD, EUR or USD
 
 ### Categories
 - A built-in set of income and expense categories, shared by every account and protected
@@ -115,13 +118,21 @@ belongs to exactly one account and is visible to no one else.
 - The exchange rate is frozen at the moment of entry
 - Totals and charts appear in your preferred currency — change it any time without altering
   a single stored record
+- The transaction list shows every amount in your preferred currency, at the rate of its own
+  date, with the amount as entered beneath it
+- Open a transaction to see its amount in RSD, EUR or USD without changing it
 
 ### Receipt capture
-- Photograph a receipt right after a purchase
-- SpARC suggests the date, total, store name and a category
+- Scan the QR code on a Serbian fiscal receipt from the Add screen: SpARC reads the exact
+  date and total from it and the store from the receipt's public record
+- No QR code, or it won't read? Photograph the receipt and SpARC reads it with OCR; a total
+  is offered only when the receipt's own numbers agree, otherwise the field is left empty
+- A category is suggested: what you used for that store before, then an AI guess, then a
+  keyword table
+- The same fiscal receipt can't be entered twice
 - Review and correct everything before saving — nothing is stored without your confirmation
 - Retake an unreadable photo, or fall back to manual entry with a clear explanation
-- Manual entry works in full even if camera access is denied
+- Manual entry works in full even if camera access is denied; photos are never stored
 
 ### Sync
 - All data is tied to the account and available after signing in again or on a second device
@@ -157,14 +168,16 @@ as the one rule that cannot break.
   or write checks ownership first.
 - **Someone else's record is a 404, not a 403** — a 403 would confirm the record exists.
 - **Authorized by default.** Every endpoint requires a valid token unless it is explicitly
-  public (register, sign in, refresh, email verification, password reset).
+  public (register, sign in, refresh).
 - **Passwords** are handled only by ASP.NET Core Identity's hasher. Passwords, tokens and
   reset links are never logged.
 - **Tokens:** a short-lived access token plus a refresh token that rotates on every use and
   is stored hashed on the server. Reusing an old refresh token invalidates the chain.
 - **On the phone** both tokens live in `expo-secure-store` — the iOS Keychain or the Android
   Keystore — never in plain-text storage.
-- **Rate limiting** on sign in, registration and password reset.
+- **Rate limiting** on sign in, registration, token refresh and receipt reading.
+- **Outbound calls go to fixed hosts only.** The API builds every URL to the exchange-rate
+  and fiscal-receipt services itself; it never fetches a URL the client sent.
 - **No information leaks in errors.** Every failure is returned as RFC 9457
   `ProblemDetails` with a trace id; stack traces, EF messages and SQL never reach the client.
 - **Database-level guarantees**: unique email, unique username and one-expense-per-bill are
@@ -188,9 +201,12 @@ as the one rule that cannot break.
                                                   ▼       ▼
                              ┌──────────────────────┐   ┌──────────────────────┐
                              │  PostgreSQL (Neon)   │   │  Receipt service     │
-                             └──────────────────────┘   │  Python, OCR         │
+                             └──────────────────────┘   │  Python, OCR + AI    │
                                                         └──────────────────────┘
 ```
+
+The API also calls two public services: `kurs.resenje.org` for the NBS middle rates, and
+`suf.purs.gov.rs` for a scanned fiscal receipt's public record.
 
 - **The app never talks to the database** and never holds a database credential. All
   business rules live in the API, because the client is the one thing an attacker controls.
@@ -199,7 +215,8 @@ as the one rule that cannot break.
 - **One error path:** services throw typed exceptions; a single global handler turns every
   failure into `ProblemDetails`.
 - **Receipt parsing** runs in a separate Python service, because that ecosystem is where the
-  OCR and vision models are. The API calls it; the app never does.
+  OCR and vision models are. The API calls it with a shared key; the app never does. If it is
+  down, QR scanning and manual entry still work and a photo gets a clear "try again later".
 
 <!-- Screenshot (optional): architecture diagram -->
 
@@ -209,17 +226,16 @@ as the one rule that cannot break.
 
 | Part | Technology |
 |---|---|
-| Mobile app | React Native with Expo, TypeScript, expo-router, TanStack Query |
+| Mobile app | React Native with Expo SDK 58, TypeScript, expo-router, TanStack Query |
+| Charts | `react-native-gifted-charts` over `react-native-svg` |
 | On-device storage | `expo-secure-store` (tokens) |
-| Device features | Local notifications (`expo-notifications`), camera |
+| Device features | Local notifications (`expo-notifications`), camera and QR scanning (`expo-camera`), photo shrinking (`expo-image-manipulator`) — all inside Expo Go, no custom build |
 | API | ASP.NET Core 10 Web API (controllers) |
 | Data access | Entity Framework Core 10 + Npgsql |
 | Database | PostgreSQL on Neon |
 | Auth | ASP.NET Core Identity + JWT access and rotating refresh tokens |
-| Receipt service | Python (separate repository) |
-| Exchange rates | Daily rates from a public FX API, cached, with fallback to the last known rate |
-| Hosting | API in a container behind a TLS reverse proxy on a Proxmox VE homelab |
-
+| Receipt service | Python, FastAPI, Tesseract OCR; Gemini for category suggestions (optional). Separate repository |
+| Exchange rates | National Bank of Serbia middle rate for each date, via `kurs.resenje.org`, stored once per date in `FxRates` |
 ---
 
 ## Data model
@@ -228,7 +244,7 @@ as the one rule that cannot break.
 |---|---|
 | `AspNetUsers` | Identity users, extended with the preferred display currency |
 | `Categories` | Shared system categories (`UserId` NULL) plus each user's own |
-| `Transactions` | Amount + currency as entered, rate to RSD and RSD value frozen at entry, date, category, optional link to the bill month it paid (unique) |
+| `Transactions` | Amount + currency as entered, rate to RSD and RSD value frozen at entry, date, category, optional link to the bill month it paid (unique), optional fiscal receipt number (unique per user) |
 | `RecurringBills` | A bill's current name, amount, currency, category, first due date and interval |
 | `BillOccurrences` | One row per bill per month, with its own status and the amount at due — so editing a bill never rewrites the past |
 | `FxRates` | The NBS middle rate of EUR and USD per date — provisional until final, then never changed |
@@ -242,8 +258,7 @@ or a bill's due date are stored as `date`. Every schema change is an EF Core mig
 ## API
 
 All endpoints are under `/api/v1` and require `Authorization: Bearer <token>` unless marked
-public. Errors are always `ProblemDetails`. Endpoints marked with an iteration are planned,
-not built yet.
+public. Errors are always `ProblemDetails`.
 
 | Area | Endpoint | |
 |---|---|---|
@@ -251,8 +266,6 @@ not built yet.
 | | `POST /api/v1/auth/login` | public |
 | | `POST /api/v1/auth/refresh` | public |
 | | `POST /api/v1/auth/logout` | |
-| | `POST /api/v1/auth/verify-email`, `POST /api/v1/auth/resend-verification` | public; iteration 5 |
-| | `POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/reset-password` | public; iteration 5 |
 | Account | `GET /api/v1/users/me` | |
 | | `PUT /api/v1/users/me` | `{ preferredCurrency }`, the display currency |
 | Categories | `GET /api/v1/categories?kind=`, `POST /api/v1/categories`, `DELETE /api/v1/categories/{id}` | system set + own; delete own only |
@@ -311,17 +324,19 @@ sparc/
       Migrations/       EF Core migrations
   app/
     app/                expo-router screens
-      (auth)/           sign in, register, verify, reset
-      (tabs)/           dashboard, transactions, analytics, calendar
-      add.tsx           add a transaction
-      transaction/      transaction detail and edit
+      (auth)/           sign in, register
+      (tabs)/           Home, Activity, Analytics, Calendar (＋ in the middle opens add)
+      add.tsx           add a transaction, or review a receipt draft
+      scan.tsx          scan a receipt's QR code, or photograph it
+      transaction/      transaction detail, edit and delete
       bills.tsx         all bills
       bill/             new bill, bill detail, edit bill
-      settings.tsx      profile, theme and sign-out, opened from the dashboard avatar
-    components/
+      settings.tsx      profile, theme, display currency and sign-out
+    components/         shared UI; analytics/ holds the charts, ui/ the base controls
     api/                typed API client, one file per resource
-    hooks/
-    lib/                themes, money and date formatting, secure storage, bill reminders
+    hooks/              TanStack Query hooks over api/
+    lib/                themes, money and date formatting, secure storage, bill reminders,
+                        receipt photo shrinking
     types/
   dotnet-tools.json     pinned dotnet-ef
 ```
@@ -335,8 +350,9 @@ sparc/
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Node.js](https://nodejs.org/) LTS
 - A PostgreSQL database — a free [Neon](https://neon.tech) project works
-- An iPhone or Android phone with [Expo Go](https://expo.dev/go), or an EAS development
-  build for camera features
+- An iPhone or Android phone with [Expo Go](https://expo.dev/go) — everything, camera
+  included, runs in it
+- For receipt photos only: Python 3 and [Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
 
 ### API
 
@@ -358,7 +374,6 @@ dotnet run --project api/Sparc.Api
 
 Open `http://localhost:5263/health` — `Healthy` means the API is up and reaching the database.
 
-<!-- Placeholder: email (SMTP) and receipt-service settings, once finalised -->
 
 ### App
 
@@ -409,7 +424,31 @@ time it starts.
 
 ### Receipt service
 
-The receipt service lives in its own repository: <!-- Placeholder: link to the receipt service repository -->
+The receipt service lives in its own repository (`sparc-ai`): <!-- Placeholder: link to the receipt service repository -->
+It reads receipt photos and suggests categories. Without it, QR scanning and manual entry
+still work; a photo gets a 503 and category suggestions fall back to the keyword table.
+
+```powershell
+cd sparc-ai
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
+```
+
+Download `srp`, `srp_latn`, `eng` and `osd` from
+[tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) into `sparc-ai/tessdata/`.
+Then create `sparc-ai/.env` (git-ignored) and give the API the same key:
+
+```
+SPARC_AI_API_KEY=<at least 32 random characters>
+GEMINI_API_KEY=<optional, from Google AI Studio>
+```
+
+```powershell
+dotnet user-secrets set "ReceiptOcr:ApiKey" "<the same key>" --project api/Sparc.Api
+
+# from sparc-ai/ — listens on 127.0.0.1:8100, where the API expects it
+.venv\Scripts\python -m sparc_ai
+```
 
 ---
 
